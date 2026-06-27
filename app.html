@@ -1483,6 +1483,11 @@ const BOOKS = {
     ]
   },
 };
+// localStorage에서 서가 수정 내용 복원
+try {
+  const saved = JSON.parse(localStorage.getItem('storeops_shelves') || '{}');
+  Object.keys(saved).forEach(isbn => { if (BOOKS[isbn]) BOOKS[isbn].shelves = saved[isbn]; });
+} catch(e) {}
 
 const INCOMING_DATA = [
   { date:'2026-06-28', isbn:'9791164370900', title:'불편한 편의점',   qty:20, status:'도착완료', reserved:5 },
@@ -1500,7 +1505,7 @@ let barcodeDetector = null;
 let scanActive = false;
 
 // ══════════════════════════════════════════
-// LOCALSTORAGE 저장/불러오기
+// LOCALSTORAGE 저장
 // ══════════════════════════════════════════
 function saveLocal() {
   try {
@@ -1511,19 +1516,9 @@ function saveLocal() {
   } catch(e) {}
 }
 
-function loadLocal() {
-  try {
-    const shelves = JSON.parse(localStorage.getItem('storeops_shelves') || '{}');
-    Object.keys(shelves).forEach(isbn => { if (BOOKS[isbn]) BOOKS[isbn].shelves = shelves[isbn]; });
-    const notes = JSON.parse(localStorage.getItem('storeops_handover') || 'null');
-    if (notes) { HANDOVER_NOTES.length = 0; notes.forEach(n => HANDOVER_NOTES.push(n)); }
-  } catch(e) {}
-}
-
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
-loadLocal();
 document.getElementById('today-date').textContent =
   new Date().toLocaleDateString('ko-KR',{month:'short',day:'numeric',weekday:'short'});
 
@@ -2384,7 +2379,7 @@ const EVENTS = [
   },
 ];
 
-const HANDOVER_NOTES = [
+const HANDOVER_DEFAULT = [
   {
     id:'h1', author:'박지호', shift:'am', time:'14:02',
     text:'A-15 서가 채식주의자 재고 2부 남음. 오늘 중 보충 필요. 창고 2번 선반에 예비 재고 있음.',
@@ -2401,6 +2396,9 @@ const HANDOVER_NOTES = [
     mine: false, scope:'part', scopeLabel:'국내도서 파트'
   },
 ];
+let HANDOVER_NOTES = (()=>{
+  try { const s = localStorage.getItem('storeops_handover'); return s ? JSON.parse(s) : HANDOVER_DEFAULT; } catch(e) { return HANDOVER_DEFAULT; }
+})();
 
 // ══════════════════════════════════════════
 // 매장 현황 DATA
