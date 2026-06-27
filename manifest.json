@@ -1,0 +1,14 @@
+{
+  "name": "StoreOps — 교보문고",
+  "short_name": "StoreOps",
+  "description": "교보문고 직원용 매장 운영 앱",
+  "start_url": "/app.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F4F7",
+  "theme_color": "#D4850A",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

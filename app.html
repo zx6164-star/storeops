@@ -1,0 +1,2842 @@
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="StoreOps">
+<meta name="theme-color" content="#D4850A">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>교보 직원 앱 — StoreOps</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:        #F2F4F7;
+    --surf1:     #FFFFFF;
+    --surf2:     #F7F8FA;
+    --surf3:     #EEF0F4;
+    --border:    #E2E6EC;
+    --accent:    #D4850A;
+    --accent-d:  rgba(212,133,10,0.12);
+    --accent-s:  rgba(212,133,10,0.06);
+    --text1:     #1A2332;
+    --text2:     #6B7A8D;
+    --text3:     #9BA8B5;
+    --good:      #1A8C3C;
+    --good-bg:   rgba(26,140,60,0.10);
+    --warn:      #B8860B;
+    --warn-bg:   rgba(184,134,11,0.10);
+    --crit:      #C0392B;
+    --crit-bg:   rgba(192,57,43,0.10);
+    --info:      #2471A3;
+    --info-bg:   rgba(36,113,163,0.10);
+    --radius:    12px;
+    --radius-s:  8px;
+    --tab-h:     64px;
+    --header-h:  56px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 430px;
+    height: 100dvh;
+    margin: 0 auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+    box-shadow: 0 0 40px rgba(0,0,0,.08);
+  }
+
+  /* ── SCREEN SYSTEM ── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transition: opacity .18s ease;
+  }
+  .screen.active {
+    opacity: 1 !important;
+    pointer-events: all !important;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    background: var(--surf1);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .header-back {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: none; color: var(--text2);
+    cursor: pointer; border-radius: 8px;
+    flex-shrink: 0;
+    transition: background .15s;
+  }
+  .header-back:hover { background: var(--surf2); }
+  .header-title {
+    font-size: 16px; font-weight: 600; color: var(--text1);
+    flex: 1;
+  }
+  .header-badge {
+    font-size: 11px; font-weight: 600;
+    background: var(--accent-d); color: var(--accent);
+    border: 1px solid rgba(240,160,48,.3);
+    border-radius: 20px; padding: 2px 8px;
+    letter-spacing: .04em;
+  }
+  .header-action {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: none; color: var(--text2);
+    cursor: pointer; border-radius: 8px;
+    transition: background .15s;
+  }
+  .header-action:hover { background: var(--surf2); }
+
+  /* ── SCROLL CONTENT ── */
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 16px calc(var(--tab-h) + 16px);
+    scroll-behavior: smooth;
+  }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-track { background: transparent; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── BOTTOM TAB ── */
+  .tab-bar {
+    height: var(--tab-h);
+    background: var(--surf1);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--text3);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .03em;
+    transition: color .15s;
+    padding: 0;
+  }
+  .tab-item svg { width: 22px; height: 22px; }
+  .tab-item.active { color: var(--accent); }
+  .tab-item.active svg path, .tab-item.active svg rect, .tab-item.active svg circle {
+    fill: var(--accent);
+  }
+
+  /* ── SCAN FAB ── */
+  .fab {
+    position: absolute;
+    bottom: calc(var(--tab-h) + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 24px rgba(240,160,48,.45);
+    transition: transform .15s, box-shadow .15s;
+    z-index: 20;
+    color: #FFFFFF;
+  }
+  .fab:active { transform: translateX(-50%) scale(.94); box-shadow: 0 2px 12px rgba(240,160,48,.3); }
+  .fab svg { width: 28px; height: 28px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surf1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .card:last-child { margin-bottom: 0; }
+  .card-header {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--accent-d);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--accent);
+    font-size: 20px;
+  }
+  .card-meta { flex: 1; min-width: 0; }
+  .card-title {
+    font-size: 15px; font-weight: 600; color: var(--text1);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+  /* ── CHIPS / BADGES ── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    border-radius: 20px; padding: 3px 9px;
+  }
+  .chip-good  { background: var(--good-bg);  color: var(--good); }
+  .chip-warn  { background: var(--warn-bg);  color: var(--warn); }
+  .chip-crit  { background: var(--crit-bg);  color: var(--crit); }
+  .chip-info  { background: var(--info-bg);  color: var(--info); }
+  .chip-acc   { background: var(--accent-d); color: var(--accent); }
+  .chip-mute  { background: var(--surf2); color: var(--text2); border: 1px solid var(--border); }
+
+  /* ── DIVIDER ── */
+  .div { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* ── ROWS ── */
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; padding: 6px 0;
+  }
+  .row-label { font-size: 12px; color: var(--text2); flex-shrink: 0; }
+  .row-value { font-size: 13px; font-weight: 500; color: var(--text1); text-align: right; }
+
+  /* ── STOCK BAR ── */
+  .stock-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px; margin-top: 10px;
+  }
+  .stock-cell {
+    background: var(--surf2);
+    border-radius: var(--radius-s);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .stock-num {
+    font-size: 24px; font-weight: 700; color: var(--text1);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .stock-label { font-size: 10px; color: var(--text2); margin-top: 4px; letter-spacing: .03em; }
+
+  /* ── SECTION HEADER ── */
+  .sec-head {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    letter-spacing: .08em; text-transform: uppercase;
+    margin: 20px 0 10px;
+  }
+  .sec-head:first-child { margin-top: 0; }
+
+  /* ── SHELF DISPLAY ── */
+  .shelf-big {
+    background: var(--surf2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+    margin: 4px 0 8px;
+  }
+  .shelf-number {
+    font-size: 42px; font-weight: 800; color: var(--accent);
+    letter-spacing: -.02em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .shelf-floor {
+    font-size: 13px; color: var(--text2); margin-top: 4px;
+  }
+  .shelf-corner {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12px; font-weight: 600;
+    background: var(--accent-d); color: var(--accent);
+    border-radius: 20px; padding: 3px 12px;
+  }
+
+  /* ── SEARCH BAR ── */
+  .search-wrap {
+    position: relative; margin-bottom: 12px;
+  }
+  .search-input {
+    width: 100%; height: 48px;
+    background: var(--surf2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    color: var(--text1);
+    font-size: 15px;
+    padding: 0 14px 0 44px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .search-input::placeholder { color: var(--text3); }
+  .search-input:focus { border-color: var(--accent); }
+  .search-icon {
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text3);
+    pointer-events: none;
+  }
+
+  /* ── BUTTON ── */
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    height: 46px; border-radius: var(--radius-s);
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; width: 100%;
+    transition: opacity .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.97); opacity: .85; }
+  .btn-accent { background: var(--accent); color: #0C1520; }
+  .btn-ghost  { background: var(--surf2); color: var(--text1); border: 1px solid var(--border); }
+  .btn-crit   { background: var(--crit-bg); color: var(--crit); border: 1px solid rgba(224,83,75,.3); }
+  .btn-sm {
+    height: 36px; font-size: 13px; padding: 0 14px; width: auto;
+    border-radius: 8px;
+  }
+
+  /* ── INPUT FIELD ── */
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block; font-size: 11px; font-weight: 600;
+    color: var(--text2); letter-spacing: .06em; text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%; height: 46px;
+    background: var(--surf2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    color: var(--text1);
+    font-size: 15px; padding: 0 12px;
+    outline: none;
+    transition: border-color .15s;
+    appearance: none;
+  }
+  .field textarea { height: 80px; padding: 10px 12px; resize: none; }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+  .field select option { background: var(--surf2); }
+
+  /* ── LOGIN ── */
+  #screen-login {
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 32px 24px;
+    gap: 0;
+  }
+  .login-logo {
+    width: 72px; height: 72px;
+    background: var(--accent-d);
+    border: 1px solid rgba(240,160,48,.25);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin-bottom: 24px;
+  }
+  .login-brand {
+    font-size: 22px; font-weight: 700; color: var(--text1);
+    letter-spacing: -.02em; margin-bottom: 4px;
+  }
+  .login-sub {
+    font-size: 13px; color: var(--text2); margin-bottom: 40px;
+  }
+  .login-form { width: 100%; }
+  .login-err {
+    background: var(--crit-bg); border: 1px solid rgba(224,83,75,.3);
+    border-radius: var(--radius-s); padding: 10px 12px;
+    font-size: 13px; color: var(--crit);
+    margin-bottom: 12px; display: none;
+  }
+  .login-footer {
+    font-size: 12px; color: var(--text3);
+    text-align: center; margin-top: 32px;
+  }
+
+  /* ── HOME ── */
+  .home-hero {
+    background: var(--surf1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px;
+  }
+  .home-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--accent-d);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .home-greeting { font-size: 12px; color: var(--text2); }
+  .home-name { font-size: 16px; font-weight: 700; color: var(--text1); margin-top: 1px; }
+  .home-role { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 3px; }
+
+  .quick-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-bottom: 16px;
+  }
+  .quick-card {
+    background: var(--surf1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-decoration: none;
+  }
+  .quick-card:hover { border-color: var(--accent); background: var(--accent-s); }
+  .quick-card-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    background: var(--surf2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  .quick-card-label { font-size: 13px; font-weight: 600; color: var(--text1); }
+  .quick-card-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ── RESULT LIST ── */
+  .result-item {
+    background: var(--surf1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .result-item:hover { border-color: var(--accent); background: var(--accent-s); }
+  .result-isbn {
+    font-size: 11px; color: var(--text3); font-family: monospace;
+    margin-top: 2px;
+  }
+  .result-stock {
+    font-size: 22px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  .result-stock-label { font-size: 10px; color: var(--text2); }
+  .book-thumb {
+    width: 44px; height: 60px;
+    border-radius: 4px;
+    background: var(--surf2);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    overflow: hidden;
+  }
+
+  /* ── ORDER STATUS LINE ── */
+  .order-row {
+    background: var(--surf2);
+    border-radius: var(--radius-s);
+    padding: 12px;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .order-row-left { flex: 1; min-width: 0; }
+  .order-row-id { font-size: 11px; color: var(--text3); font-family: monospace; }
+  .order-row-title { font-size: 13px; font-weight: 500; color: var(--text1); }
+  .order-row-date { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* ── SCAN OVERLAY ── */
+  #scan-overlay {
+    position: absolute; inset: 0;
+    background: #000;
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+  }
+  #scan-overlay.show { display: flex; }
+  #scan-video {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    object-fit: cover;
+    display: block;
+    background: #000;
+  }
+  .scan-ui {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+  }
+  .scan-frame {
+    width: 260px; height: 130px;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    box-shadow: 0 0 0 2000px rgba(0,0,0,.6);
+    position: relative;
+  }
+  .scan-line {
+    position: absolute; left: 8px; right: 8px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    top: 10%;
+    animation: scan-anim 2s linear infinite;
+  }
+  @keyframes scan-anim {
+    0%   { top: 10%; }
+    50%  { top: 85%; }
+    100% { top: 10%; }
+  }
+  .scan-corners::before, .scan-corners::after,
+  .scan-frame::before, .scan-frame::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    border-color: var(--accent);
+    border-style: solid;
+  }
+  .scan-hint {
+    font-size: 14px; color: rgba(255,255,255,.8);
+    margin-top: 24px; text-align: center;
+    pointer-events: none;
+  }
+  .scan-close {
+    position: absolute; top: 50px; right: 16px;
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,.15);
+    border-radius: 50%; border: none;
+    color: #fff; font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; pointer-events: all;
+  }
+  .scan-manual {
+    position: absolute; bottom: 80px;
+    background: rgba(12,21,32,.9);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px; width: calc(100% - 32px);
+    pointer-events: all;
+  }
+  .scan-manual input {
+    width: 100%; height: 44px;
+    background: var(--surf2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text1); font-size: 15px;
+    padding: 0 12px; outline: none;
+    font-family: monospace; letter-spacing: .1em;
+  }
+  .scan-manual .btn { margin-top: 8px; }
+
+  /* ── NOTIFICATION TOAST ── */
+  #toast {
+    position: absolute; top: 70px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--surf3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    padding: 10px 16px;
+    font-size: 13px; color: var(--text1);
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    z-index: 100;
+    opacity: 0; pointer-events: none;
+    transition: opacity .2s;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center; padding: 48px 24px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 16px; font-weight: 600; color: var(--text2); }
+  .empty-sub { font-size: 13px; margin-top: 6px; }
+
+  /* ── TOGGLE ── */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+  }
+  .toggle-label { font-size: 14px; color: var(--text1); }
+  .toggle-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .toggle {
+    width: 44px; height: 26px;
+    background: var(--surf3); border-radius: 13px;
+    border: 1px solid var(--border);
+    position: relative; cursor: pointer;
+    transition: background .2s, border-color .2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute; top: 3px; left: 3px;
+    width: 18px; height: 18px;
+    background: var(--text2);
+    border-radius: 50%;
+    transition: transform .2s, background .2s;
+  }
+  .toggle.on::after { transform: translateX(18px); background: #0C1520; }
+
+  /* ── LOG TABLE ── */
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th {
+    font-size: 10px; font-weight: 600; color: var(--text3);
+    letter-spacing: .06em; text-transform: uppercase;
+    text-align: left; padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .log-table td {
+    font-size: 12px; color: var(--text1);
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  .log-table tr:last-child td { border-bottom: none; }
+
+  /* ── PROGRESS BAR ── */
+  .prog-bar {
+    height: 4px; background: var(--surf3); border-radius: 2px;
+    overflow: hidden; margin-top: 8px;
+  }
+  .prog-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 2px;
+    transition: width .4s ease;
+  }
+
+  /* ── INNER TAB BAR ── */
+  .inner-tab-bar {
+    display: flex;
+    background: var(--surf1);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .inner-tab {
+    height: 44px;
+    padding: 0 16px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text2);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    white-space: nowrap;
+  }
+  .inner-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── GENRE FILTER CHIPS ── */
+  .genre-filter {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 12px 16px;
+    background: var(--surf1);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    scrollbar-width: none;
+  }
+  .genre-filter::-webkit-scrollbar { display: none; }
+  .genre-chip {
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 14px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surf2);
+    color: var(--text2);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .genre-chip.active {
+    background: var(--accent-d);
+    border-color: rgba(240,160,48,.4);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* ── RANK ROW ── */
+  .rank-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-num {
+    width: 28px;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text3);
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .rank-num.top3 { color: var(--accent); font-size: 15px; }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rank-author { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .rank-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+  }
+  .rank-sold {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text1);
+  }
+  .rank-stock-label { font-size: 10px; color: var(--text2); }
+
+  /* ── HANDOVER CARD ── */
+  .handover-card {
+    background: var(--surf2);
+    border-radius: var(--radius-s);
+    padding: 12px;
+    margin-bottom: 8px;
+    border-left: 3px solid var(--border);
+  }
+  .handover-card.mine { border-left-color: var(--accent); }
+  .handover-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .handover-author { font-size: 12px; font-weight: 600; color: var(--text1); }
+  .handover-time { font-size: 11px; color: var(--text3); }
+  .handover-text { font-size: 13px; color: var(--text1); line-height: 1.6; }
+  .handover-shift {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-top: 6px;
+  }
+  .shift-am { background: var(--info-bg); color: var(--info); }
+  .shift-pm { background: var(--warn-bg); color: var(--warn); }
+  .shift-close { background: var(--surf3); color: var(--text2); }
+
+  /* ── EVENT CARD ── */
+  .event-card {
+    background: var(--surf1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .event-head {
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .event-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    padding: 3px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .event-ongoing { background: var(--good-bg); color: var(--good); }
+  .event-upcoming { background: var(--info-bg); color: var(--info); }
+  .event-title { font-size: 14px; font-weight: 600; color: var(--text1); flex: 1; }
+  .event-date { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .checklist {
+    border-top: 1px solid var(--border);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text1);
+    cursor: pointer;
+  }
+  .check-item.done { color: var(--text3); text-decoration: line-through; }
+  .check-box {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    background: none;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    transition: all .15s;
+  }
+  .check-item.done .check-box {
+    background: var(--good);
+    border-color: var(--good);
+    color: #fff;
+  }
+
+  /* ── STAT CARD ── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .stat-cell {
+    background: var(--surf1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .stat-label { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .stat-change { font-size: 12px; margin-top: 6px; font-weight: 600; }
+  .stat-up { color: var(--good); }
+  .stat-down { color: var(--crit); }
+
+  /* mobile gesture feedback */
+  @media (hover: none) {
+    .result-item:active, .quick-card:active {
+      background: var(--accent-s);
+      border-color: var(--accent);
+    }
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scan-line { animation: none; top: 50%; }
+    * { transition-duration: 0ms !important; }
+  }
+</style>
+
+<div id="app">
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+  <!-- ════════════ SCREEN: LOGIN ════════════ -->
+  <div class="screen active" id="screen-login">
+    <div class="login-logo">📚</div>
+    <div class="login-brand">StoreOps</div>
+    <div class="login-sub">교보문고 직원 전용 업무 시스템</div>
+    <div class="login-form">
+      <div id="login-err" class="login-err">사번 또는 비밀번호가 올바르지 않습니다.</div>
+      <div class="field">
+        <label>사번</label>
+        <input type="text" id="login-id" placeholder="EMP-XXXXX" inputmode="text" autocomplete="username" />
+      </div>
+      <div class="field">
+        <label>비밀번호</label>
+        <div style="position:relative">
+          <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password"
+            style="padding-right:44px" onkeydown="if(event.key==='Enter')doLogin()" />
+          <button type="button" onclick="togglePw()" style="position:absolute;right:0;top:0;height:46px;width:44px;background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px" id="pw-eye">👁</button>
+        </div>
+      </div>
+      <button class="btn btn-accent" onclick="doLogin()" style="margin-top:4px">
+        로그인
+      </button>
+    </div>
+    <div class="login-footer">
+      테스트 계정: EMP-10234 / admin1234<br>
+      관리자: 13165 / 13165
+    </div>
+  </div>
+
+  <!-- ════════════ SCREEN: HOME ════════════ -->
+  <div class="screen" id="screen-home">
+    <div class="header">
+      <span style="font-size:20px">📚</span>
+      <span class="header-title">StoreOps</span>
+      <span class="header-badge" id="user-role-badge">직원</span>
+      <button class="header-action" onclick="showScreen('screen-settings')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3"/><path d="M6 20v-1a6 6 0 0112 0v1"/></svg>
+      </button>
+    </div>
+    <div class="content">
+      <div class="home-hero">
+        <div class="home-avatar">👤</div>
+        <div>
+          <div class="home-greeting">안녕하세요,</div>
+          <div class="home-name" id="home-name">직원</div>
+          <div class="home-role" id="home-dept">매장 직원</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:11px;color:var(--text3)">오늘</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text1)" id="today-date"></div>
+        </div>
+      </div>
+
+      <!-- Quick search -->
+      <div class="search-wrap">
+        <span class="search-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </span>
+        <input class="search-input" id="home-search" placeholder="도서명 또는 ISBN 검색…" onkeydown="if(event.key==='Enter')doSearch()">
+      </div>
+
+      <div class="sec-head">빠른 메뉴</div>
+      <div class="quick-grid">
+        <div class="quick-card" onclick="showScreen('screen-notices');renderNotices()">
+          <div class="quick-card-icon">📋</div>
+          <div class="quick-card-label">업무 알림</div>
+          <div class="quick-card-sub">행사 · 인수인계</div>
+        </div>
+        <div class="quick-card" onclick="showScreen('screen-orders');renderOrders()">
+          <div class="quick-card-icon">📦</div>
+          <div class="quick-card-label">발주 내역</div>
+          <div class="quick-card-sub">요청 / 승인 현황</div>
+        </div>
+        <div class="quick-card" onclick="showScreen('screen-incoming');renderIncoming()">
+          <div class="quick-card-icon">🚚</div>
+          <div class="quick-card-label">입고 예정</div>
+          <div class="quick-card-sub">오늘 + 이번 주</div>
+        </div>
+        <div class="quick-card" onclick="showScreen('screen-store');renderStoreStatus()">
+          <div class="quick-card-icon">📊</div>
+          <div class="quick-card-label">매장 현황</div>
+          <div class="quick-card-sub">판매량 · 재고 · 베스트</div>
+        </div>
+      </div>
+      <div id="quick-admin" style="display:none;margin-bottom:10px">
+        <div class="quick-card" onclick="showScreen('screen-admin');renderAdmin()">
+          <div class="quick-card-icon">🔧</div>
+          <div class="quick-card-label">관리자 메뉴</div>
+          <div class="quick-card-sub">서가 · 계정 관리</div>
+        </div>
+      </div>
+
+      <div class="sec-head">실시간 현황</div>
+      <div class="card">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+          <div>
+            <div class="stock-num" style="font-size:28px;color:var(--accent)">247</div>
+            <div class="stock-label">오늘 판매</div>
+          </div>
+          <div>
+            <div class="stock-num" style="font-size:28px;color:var(--good)">12</div>
+            <div class="stock-label">입고 예정</div>
+          </div>
+          <div>
+            <div class="stock-num" style="font-size:28px;color:var(--warn)">5</div>
+            <div class="stock-label">발주 대기</div>
+          </div>
+        </div>
+        <div class="div"></div>
+        <div id="home-store-label" style="font-size:11px;color:var(--text3);text-align:center">잠실점 · 매장 기준</div>
+      </div>
+
+      <div class="sec-head">최근 조회</div>
+      <div id="recent-list">
+        <div class="result-item" onclick="openBook('9788937460067')">
+          <div class="book-thumb">📗</div>
+          <div style="flex:1;min-width:0">
+            <div class="card-title">82년생 김지영</div>
+            <div class="result-isbn">9788937460067</div>
+            <div class="card-sub">조남주 · 민음사</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div class="result-stock" style="color:var(--good)">8</div>
+            <div class="result-stock-label">재고</div>
+          </div>
+        </div>
+        <div class="result-item" onclick="openBook('9791160505009')">
+          <div class="book-thumb">📘</div>
+          <div style="flex:1;min-width:0">
+            <div class="card-title">채식주의자</div>
+            <div class="result-isbn">9791160505009</div>
+            <div class="card-sub">한강 · 창비</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div class="result-stock" style="color:var(--warn)">2</div>
+            <div class="result-stock-label">재고</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Tab bar injected below -->
+  </div>
+
+  <!-- ════════════ SCREEN: SEARCH RESULTS ════════════ -->
+  <div class="screen" id="screen-search">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">검색 결과</span>
+      <span class="header-badge" id="search-count">0건</span>
+    </div>
+    <div style="padding:12px 16px;background:var(--surf1);border-bottom:1px solid var(--border)">
+      <div class="search-wrap" style="margin:0">
+        <span class="search-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </span>
+        <input class="search-input" id="search-refine" placeholder="검색어 수정…" onkeydown="if(event.key==='Enter')doRefineSearch()">
+      </div>
+    </div>
+    <div class="content" id="search-results" style="padding-top:12px"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: BOOK DETAIL ════════════ -->
+  <div class="screen" id="screen-book">
+    <div class="header">
+      <button class="header-back" onclick="goBackFromBook()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title" id="book-header-title">도서 정보</span>
+      <button class="header-action" onclick="openOrderRequest()" title="발주 요청">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <div class="content" id="book-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: ORDERS ════════════ -->
+  <div class="screen" id="screen-orders">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">발주 내역</span>
+      <button class="header-action" onclick="showScreen('screen-order-new')" title="새 발주">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+    <div class="content" id="orders-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: NEW ORDER ════════════ -->
+  <div class="screen" id="screen-order-new">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-orders')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">발주 요청</span>
+    </div>
+    <div class="content">
+      <div class="sec-head">도서 정보</div>
+      <div class="card" id="order-book-card">
+        <div style="color:var(--text3);font-size:13px;text-align:center;padding:12px 0">도서를 선택하세요</div>
+      </div>
+      <div class="field">
+        <label>ISBN</label>
+        <input type="text" id="order-isbn" placeholder="ISBN 입력 또는 스캔" inputmode="numeric"
+          oninput="lookupOrderBook(this.value)" />
+      </div>
+      <div class="sec-head">발주 수량</div>
+      <div class="field">
+        <label>요청 수량</label>
+        <input type="number" id="order-qty" value="5" min="1" max="999" />
+      </div>
+      <div class="field">
+        <label>우선순위</label>
+        <select id="order-priority">
+          <option value="normal">일반</option>
+          <option value="urgent">긴급</option>
+          <option value="low">보충용</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>요청 메모</label>
+        <textarea id="order-memo" placeholder="특이사항 입력 (선택)"></textarea>
+      </div>
+      <button class="btn btn-accent" onclick="submitOrder()">발주 요청 제출</button>
+      <div style="height:8px"></div>
+      <button class="btn btn-ghost" onclick="showScreen('screen-orders')">취소</button>
+    </div>
+  </div>
+
+  <!-- ════════════ SCREEN: INCOMING ════════════ -->
+  <div class="screen" id="screen-incoming">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">입고 예정</span>
+      <span class="header-badge">이번 주</span>
+    </div>
+    <div class="content" id="incoming-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: SHELF EDIT ════════════ -->
+  <div class="screen" id="screen-shelf-edit">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-book')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">서가 위치 수정</span>
+    </div>
+    <div class="content" id="shelf-edit-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: ADMIN ════════════ -->
+  <div class="screen" id="screen-admin">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">관리자 메뉴</span>
+      <span class="header-badge" style="background:rgba(224,83,75,.15);color:var(--crit);border-color:rgba(224,83,75,.3)">ADMIN</span>
+    </div>
+    <div class="content" id="admin-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: SETTINGS ════════════ -->
+  <div class="screen" id="screen-settings">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">내 계정</span>
+    </div>
+    <div class="content" id="settings-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: 업무 알림 ════════════ -->
+  <div class="screen" id="screen-notices">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">업무 알림</span>
+    </div>
+    <div class="inner-tab-bar">
+      <button class="inner-tab active" onclick="switchNoticeTab('events',this)">행사</button>
+      <button class="inner-tab" onclick="switchNoticeTab('handover',this)">인수인계</button>
+    </div>
+    <div class="content" id="notices-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: 행사 상세 ════════════ -->
+  <div class="screen" id="screen-event-detail">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-notices');renderNotices()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title" id="event-detail-title"></span>
+      <span class="header-badge" id="event-detail-badge"></span>
+    </div>
+    <div class="inner-tab-bar">
+      <button class="inner-tab active" id="event-tab-checklist" onclick="switchEventTab('checklist',this)">체크리스트</button>
+      <button class="inner-tab" id="event-tab-books" onclick="switchEventTab('books',this)">도서 리스트 <span id="event-book-count" style="font-size:11px;opacity:.7"></span></button>
+    </div>
+    <div class="content" id="event-detail-content"></div>
+  </div>
+
+  <!-- ════════════ SCREEN: 매장 현황 ════════════ -->
+  <div class="screen" id="screen-store">
+    <div class="header">
+      <button class="header-back" onclick="showScreen('screen-home')">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="header-title">매장 현황</span>
+      <span class="header-badge" id="store-corner-badge">F코너·문학</span>
+    </div>
+    <div class="content" id="store-content"></div>
+  </div>
+
+  <!-- TAB BAR (shared) -->
+  <div class="tab-bar" id="global-tab" style="display:none">
+    <button class="tab-item active" data-tab="home" onclick="switchTab('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      홈
+    </button>
+    <button class="tab-item" data-tab="search" onclick="switchTab('search')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      검색
+    </button>
+    <button class="tab-item" style="width:72px" onclick="openScan()">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="color:transparent"><circle cx="12" cy="12" r="0"/></svg>
+      &nbsp;
+    </button>
+    <button class="tab-item" data-tab="orders" onclick="switchTab('orders')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+      발주
+    </button>
+    <button class="tab-item" data-tab="incoming" onclick="switchTab('incoming')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11a2 2 0 012 2v3"/><rect x="9" y="11" width="14" height="10" rx="2"/><path d="M9 15l3 3 5-5"/></svg>
+      입고
+    </button>
+  </div>
+
+  <!-- SCAN FAB -->
+  <button class="fab" id="scan-fab" style="display:none" onclick="openScan()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/>
+      <rect x="7" y="7" width="10" height="10" rx="1"/>
+    </svg>
+  </button>
+
+  <!-- SCAN OVERLAY -->
+  <div id="scan-overlay">
+    <video id="scan-video" autoplay playsinline muted webkit-playsinline></video>
+    <div id="scan-error-msg" style="display:none;position:absolute;top:20px;left:16px;right:16px;background:rgba(200,0,0,0.85);color:#fff;font-size:13px;padding:12px;border-radius:8px;z-index:99;white-space:pre-wrap;word-break:break-all"></div>
+    <div class="scan-ui">
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+      </div>
+      <div class="scan-hint">바코드를 프레임 안에 맞춰주세요</div>
+    </div>
+    <button class="scan-close" onclick="closeScan()">✕</button>
+    <div class="scan-manual">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">ISBN 직접 입력</div>
+      <input type="text" id="scan-manual-input" placeholder="978XXXXXXXXXX" inputmode="numeric"
+        maxlength="13" onkeydown="if(event.key==='Enter')scanManualSubmit()" />
+      <button class="btn btn-accent" onclick="scanManualSubmit()" style="margin-top:8px">검색</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+
+// ── 공통 도서 스키마 (모든 어댑터가 이 형태를 반환) ──
+// {
+//   isbn:      string   13자리 ISBN
+//   title:     string   도서명
+//   author:    string   저자
+//   publisher: string   출판사
+//   image:     string|null  표지 이미지 URL
+//   price:     number   정가 (원)
+//   category:  string   분류
+// }
+
+// ── NAVER ADAPTER ─────────────────────────
+const NaverAdapter = {
+  name: 'naver',
+  _endpoint: (location.hostname === 'localhost' ? 'http://localhost:8080' : location.origin) + '/naver/book',
+
+  async search(query) {
+    const url = `${this._endpoint}?q=${encodeURIComponent(query)}`;
+    console.log('[NaverAPI] 요청 URL:', url);
+    const res = await fetch(url, { headers: { 'ngrok-skip-browser-warning': '1' } });
+    console.log('[NaverAPI] 응답 status:', res.status);
+    if (!res.ok) throw new Error(`Naver HTTP ${res.status}`);
+    const text = await res.text();
+    console.log('[NaverAPI] 응답 앞부분:', text.slice(0, 100));
+    let data;
+    try { data = JSON.parse(text); } catch(e) { throw new Error('JSON 파싱 실패 (ngrok 차단 페이지?)'); }
+    console.log('[NaverAPI] 결과 수:', (data.items||[]).length);
+    return (data.items || []).map(NaverAdapter._normalize);
+  },
+
+  async getByISBN(isbn) {
+    const results = await this.search(isbn);
+    return results[0] || null;
+  },
+
+  _normalize(item) {
+    return {
+      isbn:      item.isbn.split(' ').pop().replace(/\D/g, ''),
+      title:     item.title.replace(/<[^>]+>/g, ''),
+      author:    item.author.replace(/<[^>]+>/g, '').split('^')[0].trim(),
+      publisher: item.publisher.replace(/<[^>]+>/g, ''),
+      image:     item.image || null,
+      price:     parseInt(item.price) || 0,
+      category:  item.category || '도서',
+    };
+  },
+};
+
+// ── KYOBO ADAPTER (교보 API 연동 시 이 블록만 채우면 됩니다) ──
+const KyoboAdapter = {
+  name: 'kyobo',
+  _endpoint: (location.hostname === 'localhost' ? 'http://localhost:8080' : location.origin) + '/kyobo/book',
+
+  async search(query) {
+    const res = await fetch(`${this._endpoint}?q=${encodeURIComponent(query)}`);
+    if (!res.ok) throw new Error(`Kyobo HTTP ${res.status}`);
+    const data = await res.json();
+    return (data.items || []).map(KyoboAdapter._normalize); // TODO: 교보 응답 키 확인 후 수정
+  },
+
+  async getByISBN(isbn) {
+    const results = await this.search(isbn);
+    return results[0] || null;
+  },
+
+  // 교보 API 응답 형식에 맞게 수정 — 필드명만 바꾸면 됩니다
+  _normalize(item) {
+    return {
+      isbn:      item.isbn,           // TODO: 교보 응답 필드명으로 교체
+      title:     item.title,
+      author:    item.author,
+      publisher: item.publisher,
+      image:     item.coverUrl || null,
+      price:     parseInt(item.price) || 0,
+      category:  item.category || '도서',
+    };
+  },
+};
+
+// ── MOCK ADAPTER (API 없이 테스트할 때) ────
+const MockAdapter = {
+  name: 'mock',
+
+  async search(query) {
+    const ql = query.toLowerCase().replace(/[-\s]/g, '');
+    return Object.values(BOOKS)
+      .filter(b =>
+        b.isbn.includes(ql) ||
+        b.title.toLowerCase().includes(query.toLowerCase()) ||
+        b.author.toLowerCase().includes(query.toLowerCase())
+      )
+      .map(MockAdapter._normalize);
+  },
+
+  async getByISBN(isbn) {
+    const b = BOOKS[isbn];
+    return b ? MockAdapter._normalize(b) : null;
+  },
+
+  _normalize(b) {
+    return {
+      isbn: b.isbn, title: b.title, author: b.author,
+      publisher: b.publisher, image: null,
+      price: b.price || 0, category: b.category || '도서',
+    };
+  },
+};
+
+// ── BOOK SERVICE ───────────────────────────
+// 앱 전체에서 여기만 호출합니다.
+// 어댑터를 바꾸려면 _adapter 한 줄만 수정하면 됩니다.
+const BookService = {
+  _adapter: NaverAdapter, // ← 교보로 교체 시: KyoboAdapter
+
+  use(adapter) {
+    this._adapter = adapter;
+    console.info(`[BookService] 어댑터 전환: ${adapter.name}`);
+  },
+
+  async search(query) {
+    try {
+      const books = await this._adapter.search(query);
+      return books.map(b => ({ ...b, ...getInventory(b.isbn) }));
+    } catch (e) {
+      console.warn(`[BookService] ${this._adapter.name} 실패, Mock 폴백:`, e.message);
+      toast('⚠️ API 오류: ' + e.message, 5000);
+      if (this._adapter !== MockAdapter) {
+        const books = await MockAdapter.search(query);
+        return books.map(b => ({ ...b, ...getInventory(b.isbn) }));
+      }
+      return [];
+    }
+  },
+
+  async getByISBN(isbn) {
+    try {
+      const book = await this._adapter.getByISBN(isbn);
+      if (!book) return null;
+      const result = { ...book, ...getInventory(isbn) };
+      BOOKS[isbn] = BOOKS[isbn] || result; // 캐시
+      return result;
+    } catch (e) {
+      console.warn(`[BookService] ${this._adapter.name} 실패, Mock 폴백:`, e.message);
+      return MockAdapter.getByISBN(isbn).then(b => b ? { ...b, ...getInventory(isbn) } : null);
+    }
+  },
+};
+
+// ── INVENTORY (재고·서가·발주 — 교보 내부 데이터, 별도 관리) ──
+// 나중에 교보 재고 API가 생기면 이 함수만 교체하면 됩니다.
+function getInventory(isbn) {
+  const b = BOOKS[isbn];
+  if (b?.stock) return { stock: b.stock, shelf: b.shelf, incoming: b.incoming, orders: b.orders };
+  const a = Math.floor(Math.random() * 8) + 1;
+  const s = Math.floor(Math.random() * 5);
+  return {
+    stock:    { available: a, stored: s, total: a + s },
+    shelves:  [{ number:'NEW-01', displayType:'신간대', subCategory:null }],
+    incoming: { qty: 0, date: null, status: '없음', reserved: 0 },
+    orders:   [],
+  };
+}
+
+const ACCOUNTS = {
+  'EMP-10234': { pw:'admin1234', name:'김민준', dept:'2층 국내도서', role:'staff', floor:'2F', store:'잠실점' },
+  '13165': { pw:'13165', name:'장가영', dept:'매장 관리팀', role:'admin', floor:'ALL', store:'잠실점' },
+  'EMP-20567': { pw:'pass1234',  name:'박지호', dept:'1층 외국도서', role:'staff', floor:'1F', store:'잠실점' },
+};
+
+const BOOKS = {
+  '9788937460067': {
+    isbn:'9788937460067', title:'82년생 김지영', author:'조남주',
+    publisher:'민음사', price:14800, category:'국내소설',
+    stock:{ available:3, stored:5, total:8 },
+    shelves:[{ number:'A-15', displayType:'서가', subCategory:'1' },{ number:'BS-01', displayType:'평대', subCategory:null }],
+    incoming:{ qty:10, orderDate:'2026-07-02', recentDeliveries:[{date:'2026-06-25',qty:8},{date:'2026-06-18',qty:10}], customerReservations:2 },
+    orders:[
+      { id:'ORD-2026-0891', qty:20, reqQty:20, status:'승인완료', date:'2026-06-25', requester:'김민준' },
+    ]
+  },
+  '9791160505009': {
+    isbn:'9791160505009', title:'채식주의자', author:'한강',
+    publisher:'창비', price:12000, category:'국내소설',
+    stock:{ available:2, stored:0, total:2 },
+    shelves:[{ number:'F3', displayType:'평대', subCategory:null },{ number:'G14', displayType:'평대', subCategory:null },{ number:'F12-1', displayType:'서가', subCategory:'3' }],
+    incoming:{ qty:0, orderDate:null, recentDeliveries:[{date:'2026-06-10',qty:5}], customerReservations:0 },
+    orders:[
+      { id:'ORD-2026-0834', qty:10, reqQty:10, status:'검토중', date:'2026-06-26', requester:'박지호' },
+    ]
+  },
+  '9788937473746': {
+    isbn:'9788937473746', title:'소년이 온다', author:'한강',
+    publisher:'창비', price:13500, category:'국내소설',
+    stock:{ available:6, stored:4, total:10 },
+    shelves:[{ number:'A-23', displayType:'서가', subCategory:'2' },{ number:'F5', displayType:'평대', subCategory:null }],
+    incoming:{ qty:5, orderDate:'2026-07-01', recentDeliveries:[{date:'2026-06-20',qty:10}], customerReservations:1 },
+    orders:[]
+  },
+  '9791164370900': {
+    isbn:'9791164370900', title:'불편한 편의점', author:'김호연',
+    publisher:'나무옆의자', price:14000, category:'국내소설',
+    stock:{ available:0, stored:2, total:2 },
+    shelves:[{ number:'BS-03', displayType:'전시대', subCategory:null },{ number:'A-18', displayType:'서가', subCategory:'1' }],
+    incoming:{ qty:20, orderDate:'2026-06-28', recentDeliveries:[{date:'2026-06-28',qty:20},{date:'2026-06-15',qty:15}], customerReservations:5 },
+    orders:[
+      { id:'ORD-2026-0901', qty:30, reqQty:30, status:'발주완료', date:'2026-06-27', requester:'장가영' },
+    ]
+  },
+  '9791135495748': {
+    isbn:'9791135495748', title:'아몬드', author:'손원평',
+    publisher:'창비', price:13000, category:'국내소설',
+    stock:{ available:4, stored:1, total:5 },
+    shelves:[{ number:'A-18', displayType:'서가', subCategory:'2' }],
+    incoming:{ qty:0, orderDate:null, recentDeliveries:[], customerReservations:0 },
+    orders:[]
+  },
+  '9788943408732': {
+    isbn:'9788943408732', title:'트렌드 코리아 2026', author:'김난도 외',
+    publisher:'미래의창', price:22000, category:'경제/경영',
+    stock:{ available:7, stored:3, total:10 },
+    shelves:[{ number:'EC-08', displayType:'서가', subCategory:'1' },{ number:'NB-02', displayType:'신간대', subCategory:null }],
+    incoming:{ qty:15, orderDate:'2026-07-03', recentDeliveries:[{date:'2026-06-22',qty:20}], customerReservations:0 },
+    orders:[
+      { id:'ORD-2026-0889', qty:50, reqQty:50, status:'승인완료', date:'2026-06-24', requester:'장가영' },
+    ]
+  },
+};
+
+const INCOMING_DATA = [
+  { date:'2026-06-28', isbn:'9791164370900', title:'불편한 편의점',   qty:20, status:'도착완료', reserved:5 },
+  { date:'2026-07-01', isbn:'9788937473746', title:'소년이 온다',     qty:5,  status:'출발전',   reserved:1 },
+  { date:'2026-07-02', isbn:'9788937460067', title:'82년생 김지영',   qty:10, status:'배송중',   reserved:2 },
+  { date:'2026-07-03', isbn:'9788943408732', title:'트렌드 코리아 2026', qty:15, status:'주문접수', reserved:0 },
+  { date:'2026-07-05', isbn:'9791160505009', title:'채식주의자',       qty:8,  status:'주문접수', reserved:0 },
+];
+
+let currentUser = null;
+let currentBookIsbn = null;
+let prevScreen = 'screen-home';
+let scanStream = null;
+let barcodeDetector = null;
+let scanActive = false;
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+document.getElementById('today-date').textContent =
+  new Date().toLocaleDateString('ko-KR',{month:'short',day:'numeric',weekday:'short'});
+
+// ══════════════════════════════════════════
+// SCREEN NAV
+// ══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const hasTab = ['screen-home','screen-search','screen-orders','screen-incoming','screen-notices','screen-store'].includes(id);
+  const hasFab = ['screen-home','screen-search','screen-orders','screen-incoming','screen-store'].includes(id);
+  document.getElementById('global-tab').style.display = hasTab ? 'flex' : 'none';
+  document.getElementById('scan-fab').style.display = hasFab ? 'flex' : 'none';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-item[data-tab]').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  const map = {home:'screen-home', search:'screen-search', orders:'screen-orders', incoming:'screen-incoming'};
+  if(map[tab]) {
+    showScreen(map[tab]);
+    if(tab==='orders') renderOrders();
+    if(tab==='incoming') renderIncoming();
+    if(tab==='search') document.getElementById('search-refine').focus();
+  }
+}
+
+// ══════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════
+function togglePw() {
+  const f = document.getElementById('login-pw');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function doLogin() {
+  const id = document.getElementById('login-id').value.trim().toUpperCase();
+  const pw = document.getElementById('login-pw').value.trim();
+  const err = document.getElementById('login-err');
+  const acc = ACCOUNTS[id];
+  if(!acc || acc.pw !== pw) {
+    err.textContent = `사번 또는 비밀번호가 올바르지 않습니다. (입력: ${id})`;
+    err.style.display = 'block';
+    document.getElementById('login-pw').value = '';
+    return;
+  }
+  err.style.display = 'none';
+  currentUser = { ...acc, id };
+  const storeName = acc.store || '잠실점';
+  document.getElementById('home-name').textContent = acc.name + ' / ' + storeName;
+  document.getElementById('home-store-label').textContent = storeName + ' · 매장 기준';
+  document.getElementById('home-dept').textContent = acc.dept;
+  document.getElementById('user-role-badge').textContent = acc.role === 'admin' ? '관리자' : '직원';
+  if(acc.role === 'admin') document.getElementById('quick-admin').style.display = '';
+  showScreen('screen-home');
+  document.getElementById('global-tab').style.display = 'flex';
+  document.getElementById('scan-fab').style.display = 'flex';
+  renderSettings();
+}
+
+// ══════════════════════════════════════════
+// SEARCH
+// ══════════════════════════════════════════
+function doSearch() {
+  const q = document.getElementById('home-search').value.trim();
+  if(!q) return;
+  performSearch(q);
+}
+function doRefineSearch() {
+  const q = document.getElementById('search-refine').value.trim();
+  if(!q) return;
+  performSearch(q);
+}
+
+function renderSearchResults(results, q) {
+  document.getElementById('search-count').textContent = results.length + '건';
+  document.getElementById('search-refine').value = q;
+  const el = document.getElementById('search-results');
+  if (results.length === 0) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div>
+      <div class="empty-title">검색 결과 없음</div>
+      <div class="empty-sub">"${escHtml(q)}"에 대한 도서를 찾지 못했습니다</div></div>`;
+  } else {
+    el.innerHTML = results.map(b => {
+      const total = b.stock.available + b.stock.stored;
+      const sc = stockColor(total);
+      const thumb = b.image
+        ? `<img src="${b.image}" style="width:44px;height:60px;object-fit:cover;border-radius:4px;border:1px solid var(--border)">`
+        : `<div class="book-thumb">📖</div>`;
+      return `<div class="result-item" onclick="openBook('${b.isbn}')">
+        ${thumb}
+        <div style="flex:1;min-width:0">
+          <div class="card-title">${escHtml(b.title)}</div>
+          <div class="result-isbn">${b.isbn}</div>
+          <div class="card-sub">${escHtml(b.author)} · ${escHtml(b.publisher)}</div>
+          <div style="margin-top:6px">
+            <span class="chip chip-mute" style="font-size:10px">${shelfSummary(b.shelves)}</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="result-stock" style="color:${sc.color}">${total}</div>
+          <div class="result-stock-label">재고</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  prevScreen = 'screen-search';
+  switchTab('search');
+  showScreen('screen-search');
+}
+
+async function performSearch(q) {
+  const clean = q.trim().replace(/[-\s]/g, '');
+  console.log('[검색] 원본:', JSON.stringify(q), '→ 정제:', JSON.stringify(clean));
+  const el = document.getElementById('search-results');
+  el.innerHTML = `<div class="empty"><div class="empty-icon" style="font-size:32px;animation:spin 1s linear infinite">⟳</div><div class="empty-sub" style="margin-top:8px">검색 중…</div></div>`;
+  prevScreen = 'screen-search';
+  switchTab('search');
+  showScreen('screen-search');
+  const results = await BookService.search(clean);
+  console.log('[검색] 결과 수:', results.length);
+  renderSearchResults(results, clean);
+}
+
+// ══════════════════════════════════════════
+// BOOK DETAIL
+// ══════════════════════════════════════════
+async function openBook(isbn) {
+  // 현재 활성 화면을 뒤로가기 대상으로 저장 (screen-book 제외)
+  const active = document.querySelector('.screen.active');
+  if (active && active.id !== 'screen-book') prevScreen = active.id;
+  if (!BOOKS[isbn]) {
+    const book = await BookService.getByISBN(isbn);
+    if (!book) { toast('도서 정보를 불러올 수 없습니다'); return; }
+    BOOKS[isbn] = book;
+  }
+  const b = BOOKS[isbn];
+  currentBookIsbn = isbn;
+  document.getElementById('book-header-title').textContent = b.title.length > 14 ? b.title.slice(0,14)+'…' : b.title;
+  const sc = stockColor(b.stock.total);
+  const isAdmin = currentUser?.role === 'admin';
+  const html = `
+    <!-- Book info card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="book-thumb" style="width:52px;height:72px;font-size:26px;border-radius:6px">📖</div>
+        <div class="card-meta">
+          <div class="card-title" style="white-space:normal;font-size:16px;line-height:1.3">${escHtml(b.title)}</div>
+          <div class="card-sub" style="margin-top:4px">${escHtml(b.author)}</div>
+          <div class="card-sub">${escHtml(b.publisher)}</div>
+        </div>
+      </div>
+      <div class="div"></div>
+      <div class="row">
+        <span class="row-label">ISBN</span>
+        <span class="row-value" style="font-family:monospace;font-size:12px">${b.isbn}</span>
+      </div>
+      <div class="row">
+        <span class="row-label">분류</span>
+        <span class="row-value"><span class="chip chip-mute">${escHtml(b.category)}</span></span>
+      </div>
+      <div class="row">
+        <span class="row-label">정가</span>
+        <span class="row-value">${b.price.toLocaleString()}원</span>
+      </div>
+      <div class="row">
+        <span class="row-label">판매 가능</span>
+        <span class="row-value">
+          ${b.stock.available > 0
+            ? `<span class="chip chip-good">✓ 판매가능</span>`
+            : `<span class="chip chip-crit">✗ 품절</span>`}
+        </span>
+      </div>
+    </div>
+
+    <!-- Stock -->
+    <div class="sec-head">재고 현황</div>
+    <div class="card">
+      <div class="stock-grid">
+        <div class="stock-cell">
+          <div class="stock-num" style="color:${sc.color}">${b.stock.total}</div>
+          <div class="stock-label">전체 재고</div>
+        </div>
+        <div class="stock-cell">
+          <div class="stock-num" style="color:${b.stock.available>0?'var(--good)':'var(--crit)'}">${b.stock.available}</div>
+          <div class="stock-label">판매 가능</div>
+        </div>
+        <div class="stock-cell">
+          <div class="stock-num" style="color:var(--info)">${b.stock.stored}</div>
+          <div class="stock-label">예약 재고</div>
+        </div>
+      </div>
+      <div class="prog-bar" style="margin-top:12px">
+        <div class="prog-fill" style="width:${Math.min(100,b.stock.total/20*100)}%;background:${sc.color}"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:right">최대 진열 기준 20부</div>
+    </div>
+
+    <!-- Shelf location -->
+    <div class="sec-head">서가 위치</div>
+    <div class="card">
+      <div style="padding:4px 0">${shelfListHtml(b.shelves, isAdmin, isbn)}</div>
+      ${isAdmin ? `
+      <div style="height:10px"></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%" onclick="openShelfEdit('${b.isbn}')">
+        ✏️ 서가 위치 수정
+      </button>` : ''}
+    </div>
+
+    <!-- Incoming -->
+    <div class="sec-head">입고 예정</div>
+    <div class="card">
+      ${b.incoming.qty > 0 ? `
+      <div class="row">
+        <span class="row-label">입고 예정 수량</span>
+        <span class="row-value" style="font-size:18px;font-weight:700;color:var(--accent)">${b.incoming.qty}부</span>
+      </div>
+      <div class="row">
+        <span class="row-label">발주일</span>
+        <span class="row-value">${b.incoming.orderDate || '-'}</span>
+      </div>
+      ` : `
+      <div style="text-align:center;padding:16px 0;color:var(--text3);font-size:13px">
+        입고 예정 없음
+      </div>
+      `}
+      <div class="div"></div>
+      <div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px">최근 입고 내역</div>
+      ${b.incoming.recentDeliveries && b.incoming.recentDeliveries.length > 0 ? `
+        ${b.incoming.recentDeliveries.map(d => `
+          <div class="row" style="padding:4px 0">
+            <span class="row-label">${d.date}</span>
+            <span class="row-value" style="font-variant-numeric:tabular-nums">${d.qty}부 입고</span>
+          </div>
+        `).join('')}
+      ` : `
+        <div style="font-size:13px;color:var(--text3);padding:4px 0">입고 내역 없음</div>
+      `}
+      <div class="div"></div>
+      <div class="row">
+        <span class="row-label">고객 예약</span>
+        <span class="row-value">
+          ${b.incoming.customerReservations > 0
+            ? `<span class="chip chip-warn">📌 ${b.incoming.customerReservations}건</span>`
+            : `<span style="color:var(--text3);font-size:13px">없음</span>`}
+        </span>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="sec-head">발주 내역</div>
+    ${b.orders.length > 0 ? b.orders.map(o => `
+    <div class="order-row">
+      <div class="order-row-left">
+        <div class="order-row-id">${o.id}</div>
+        <div class="order-row-title">${o.qty}부 발주 · 요청자: ${escHtml(o.requester)}</div>
+        <div class="order-row-date">${o.date}</div>
+      </div>
+      <span class="chip ${orderChip(o.status)}">${o.status}</span>
+    </div>`).join('') : `
+    <div class="card" style="text-align:center;color:var(--text3);font-size:13px">발주 내역 없음</div>
+    `}
+    <div style="height:8px"></div>
+    <button class="btn btn-accent" onclick="openOrderRequest('${b.isbn}')">📦 발주 요청</button>
+    <div style="height:16px"></div>
+  `;
+  document.getElementById('book-content').innerHTML = html;
+  showScreen('screen-book');
+}
+
+function goBackFromBook() {
+  showScreen(prevScreen || 'screen-home');
+}
+
+// ══════════════════════════════════════════
+// SHELF EDIT
+// ══════════════════════════════════════════
+function openShelfEdit(isbn) {
+  if(currentUser?.role !== 'admin') { toast('관리자 권한이 필요합니다'); return; }
+  const b = BOOKS[isbn];
+  document.getElementById('shelf-edit-content').innerHTML = `
+    <div class="sec-head">현재 위치</div>
+    <div class="sec-head">현재 위치</div>
+    <div class="card">${shelfListHtml(b.shelves)}</div>
+    <div class="sec-head">위치 추가 / 수정</div>
+    <div id="shelf-edit-rows">
+      ${(b.shelves||[]).map((s,i) => `
+        <div class="card" style="margin-bottom:8px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="font-size:12px;font-weight:600;color:var(--text2)">위치 ${i+1}</span>
+            <button class="btn btn-crit btn-sm" onclick="removeShelfRow(${i},'${isbn}')">삭제</button>
+          </div>
+          <div class="field" style="margin-bottom:8px">
+            <label>서가 번호</label>
+            <input type="text" class="shelf-num-input" value="${escHtml(s.number)}" placeholder="예: F3, A-15" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="field" style="margin-bottom:0">
+              <label>진열 방식</label>
+              <select class="shelf-type-input">
+                ${['서가','평대','전시대','신간대'].map(t=>`<option ${s.displayType===t?'selected':''}>${t}</option>`).join('')}
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label>소분류</label>
+              <input type="text" class="shelf-sub-input" value="${escHtml(s.subCategory||'')}" placeholder="예: 1, 2, 3" />
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <button class="btn btn-ghost" onclick="addShelfRow('${isbn}')" style="margin-bottom:10px">+ 위치 추가</button>
+    <button class="btn btn-accent" onclick="saveShelf('${isbn}')">저장</button>
+    <div style="height:12px"></div>
+    <div class="sec-head">수정 이력</div>
+    <div style="background:var(--surf1);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <table class="log-table">
+        <thead><tr><th>수정자</th><th>변경 내용</th><th>일시</th></tr></thead>
+        <tbody>
+          <tr><td>장가영</td><td>F12 추가</td><td>06-20</td></tr>
+          <tr><td>김민준</td><td>G14 평대 추가</td><td>05-12</td></tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+  showScreen('screen-shelf-edit');
+}
+
+function addShelfRow(isbn) {
+  const b = BOOKS[isbn];
+  b.shelves.push({ number:'', displayType:'서가', subCategory:null });
+  openShelfEdit(isbn);
+}
+
+function removeShelfRow(idx, isbn) {
+  const b = BOOKS[isbn];
+  b.shelves.splice(idx, 1);
+  openShelfEdit(isbn);
+}
+
+function saveShelf(isbn) {
+  const b = BOOKS[isbn];
+  const nums  = document.querySelectorAll('.shelf-num-input');
+  const types = document.querySelectorAll('.shelf-type-input');
+  const subs  = document.querySelectorAll('.shelf-sub-input');
+  b.shelves = Array.from(nums).map((n, i) => ({
+    number:      n.value.trim(),
+    displayType: types[i].value,
+    subCategory: subs[i].value.trim() || null,
+  })).filter(s => s.number);
+  toast('서가 위치가 저장되었습니다 ✓');
+  const savedPrev = prevScreen;
+  setTimeout(() => { openBook(isbn); prevScreen = savedPrev; showScreen('screen-book'); }, 400);
+}
+
+// ══════════════════════════════════════════
+// ORDERS
+// ══════════════════════════════════════════
+function renderOrders() {
+  const allOrders = [];
+  Object.values(BOOKS).forEach(b => {
+    b.orders.forEach(o => allOrders.push({...o, title:b.title, isbn:b.isbn}));
+  });
+  allOrders.sort((a,b) => b.date.localeCompare(a.date));
+  const isAdmin = currentUser?.role === 'admin';
+  const el = document.getElementById('orders-content');
+  const statuses = ['검토중','승인완료','발주완료','반려'];
+  const grouped = {};
+  statuses.forEach(s => grouped[s] = allOrders.filter(o => o.status === s));
+
+  let html = '';
+  statuses.forEach(s => {
+    const items = grouped[s];
+    if(!items.length) return;
+    html += `<div class="sec-head">${s} (${items.length})</div>`;
+    items.forEach(o => {
+      html += `
+      <div class="card" style="padding:12px" onclick="openBook('${o.isbn}')">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;color:var(--text1)">${escHtml(o.title)}</div>
+            <div style="font-size:11px;color:var(--text3);font-family:monospace;margin-top:2px">${o.id}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px">${o.qty}부 · 요청자 ${escHtml(o.requester)} · ${o.date}</div>
+          </div>
+          <span class="chip ${orderChip(o.status)}">${o.status}</span>
+        </div>
+        ${isAdmin && o.status === '검토중' ? `
+        <div class="div"></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-accent btn-sm" onclick="event.stopPropagation();approveOrder('${o.id}','${o.isbn}')">승인</button>
+          <button class="btn btn-crit btn-sm" onclick="event.stopPropagation();rejectOrder('${o.id}','${o.isbn}')">반려</button>
+        </div>` : ''}
+      </div>`;
+    });
+  });
+  if(!allOrders.length) {
+    html = `<div class="empty"><div class="empty-icon">📦</div>
+      <div class="empty-title">발주 내역 없음</div></div>`;
+  }
+  el.innerHTML = html;
+}
+
+function approveOrder(orderId, isbn) {
+  const b = BOOKS[isbn];
+  const o = b.orders.find(x=>x.id===orderId);
+  if(o) o.status = '승인완료';
+  toast('발주가 승인되었습니다 ✓');
+  renderOrders();
+}
+function rejectOrder(orderId, isbn) {
+  const b = BOOKS[isbn];
+  const o = b.orders.find(x=>x.id===orderId);
+  if(o) o.status = '반려';
+  toast('발주가 반려되었습니다');
+  renderOrders();
+}
+
+function openOrderRequest(isbn) {
+  if(isbn) {
+    const b = BOOKS[isbn];
+    document.getElementById('order-isbn').value = b.isbn;
+    lookupOrderBook(b.isbn);
+  }
+  showScreen('screen-order-new');
+}
+
+let orderLookupTimer = null;
+function lookupOrderBook(val) {
+  clearTimeout(orderLookupTimer);
+  orderLookupTimer = setTimeout(async () => {
+    const clean = val.replace(/\D/g,'');
+    if (!BOOKS[clean] && clean.length >= 10) {
+      const book = await BookService.getByISBN(clean);
+      if (book) BOOKS[clean] = book;
+    }
+    const b = BOOKS[clean];
+    const el = document.getElementById('order-book-card');
+    if(b) {
+      const sc = stockColor(b.stock.total);
+      el.innerHTML = `
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="book-thumb" style="font-size:22px">📖</div>
+          <div style="flex:1;min-width:0">
+            <div class="card-title">${escHtml(b.title)}</div>
+            <div class="card-sub">${escHtml(b.author)} · ${escHtml(b.publisher)}</div>
+          </div>
+        </div>
+        <div class="div"></div>
+        <div class="row">
+          <span class="row-label">현재 재고</span>
+          <span class="row-value" style="color:${sc.color};font-weight:700">${b.stock.total}부</span>
+        </div>
+        <div class="row">
+          <span class="row-label">서가 위치</span>
+          <span class="row-value">${shelfSummary(b.shelves)}</span>
+        </div>`;
+    } else if(clean.length > 0) {
+      el.innerHTML = `<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px 0">ISBN을 찾을 수 없습니다</div>`;
+    } else {
+      el.innerHTML = `<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px 0">도서를 선택하세요</div>`;
+    }
+  }, 300);
+}
+
+function submitOrder() {
+  const isbn = document.getElementById('order-isbn').value.replace(/\D/g,'');
+  const qty  = parseInt(document.getElementById('order-qty').value) || 1;
+  const b = BOOKS[isbn];
+  if(!b) { toast('올바른 ISBN을 입력해주세요'); return; }
+  const newOrder = {
+    id: 'ORD-2026-' + (900 + Math.floor(Math.random()*99)),
+    qty, reqQty: qty,
+    status: '검토중',
+    date: new Date().toISOString().slice(0,10),
+    requester: currentUser?.name || '직원'
+  };
+  b.orders.unshift(newOrder);
+  toast(`발주 요청이 접수되었습니다 — ${qty}부`);
+  showScreen('screen-orders');
+  renderOrders();
+}
+
+// ══════════════════════════════════════════
+// INCOMING
+// ══════════════════════════════════════════
+function renderIncoming() {
+  const grouped = {};
+  INCOMING_DATA.forEach(i => {
+    if(!grouped[i.date]) grouped[i.date] = [];
+    grouped[i.date].push(i);
+  });
+  let html = '';
+  const today = new Date().toISOString().slice(0,10);
+  Object.keys(grouped).sort().forEach(date => {
+    const isToday = date === today;
+    const isPast  = date < today;
+    html += `<div class="sec-head">${date}${isToday?' (오늘)':''}${isPast?' (완료)':''}</div>`;
+    grouped[date].forEach(item => {
+      html += `
+      <div class="result-item" onclick="openBook('${item.isbn}')">
+        <div class="book-thumb">📦</div>
+        <div style="flex:1;min-width:0">
+          <div class="card-title">${escHtml(item.title)}</div>
+          <div class="result-isbn">${item.isbn}</div>
+          ${item.reserved > 0 ? `<div style="margin-top:4px"><span class="chip chip-warn">예약 ${item.reserved}건</span></div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="result-stock" style="color:var(--accent)">${item.qty}</div>
+          <div class="result-stock-label">예정 수량</div>
+          <div style="margin-top:4px"><span class="chip ${incomingChip(item.status)}" style="font-size:10px">${item.status}</span></div>
+        </div>
+      </div>`;
+    });
+  });
+  document.getElementById('incoming-content').innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════════
+function renderAdmin() {
+  document.getElementById('admin-content').innerHTML = `
+    <div class="sec-head">계정 관리</div>
+    <div style="background:var(--surf1);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <table class="log-table">
+        <thead><tr><th>사번</th><th>이름</th><th>구분</th><th>상태</th></tr></thead>
+        <tbody>
+          ${Object.entries(ACCOUNTS).map(([id,a])=>`
+          <tr>
+            <td style="font-family:monospace">${id}</td>
+            <td>${escHtml(a.name)}</td>
+            <td><span class="chip ${a.role==='admin'?'chip-acc':'chip-mute'}" style="font-size:10px">${a.role==='admin'?'관리자':'직원'}</span></td>
+            <td><span class="chip chip-good" style="font-size:10px">활성</span></td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="sec-head">서가 현황 요약</div>
+    ${Object.values(BOOKS).map(b=>`
+    <div class="result-item" onclick="openShelfEdit('${b.isbn}')">
+      <div style="flex:1;min-width:0">
+        <div class="card-title">${escHtml(b.title)}</div>
+        <div class="card-sub">${shelfSummary(b.shelves)}</div>
+      </div>
+      <div style="color:var(--text3);font-size:18px">›</div>
+    </div>`).join('')}
+
+    <div class="sec-head">활동 로그</div>
+    <div style="background:var(--surf1);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <table class="log-table">
+        <thead><tr><th>시간</th><th>직원</th><th>활동</th></tr></thead>
+        <tbody>
+          <tr><td>10:42</td><td>김민준</td><td>도서 조회: 82년생 김지영</td></tr>
+          <tr><td>10:38</td><td>박지호</td><td>발주 요청: 채식주의자 10부</td></tr>
+          <tr><td>10:21</td><td>장가영</td><td>서가 수정: A-14 → A-15</td></tr>
+          <tr><td>09:55</td><td>김민준</td><td>바코드 스캔: 9791164370900</td></tr>
+          <tr><td>09:30</td><td>장가영</td><td>발주 승인: ORD-2026-0891</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="height:8px"></div>
+    <button class="btn btn-crit" onclick="doLogout()">로그아웃</button>
+  `;
+}
+
+// ══════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════
+function renderSettings() {
+  const u = currentUser;
+  document.getElementById('settings-content').innerHTML = `
+    <div style="text-align:center;padding:24px 0">
+      <div style="width:72px;height:72px;border-radius:50%;background:var(--accent-d);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 12px">👤</div>
+      <div style="font-size:18px;font-weight:700;color:var(--text1)">${escHtml(u?.name||'')} 직원</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:4px">${escHtml(u?.dept||'')} · ${escHtml(u?.id||'')}</div>
+      <div style="margin-top:8px"><span class="chip ${u?.role==='admin'?'chip-acc':'chip-mute'}">${u?.role==='admin'?'관리자':'일반 직원'}</span></div>
+    </div>
+
+    <div class="sec-head">보안 설정</div>
+    <div class="card">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">자동 로그아웃</div>
+          <div class="toggle-sub">30분 미사용 시 자동 로그아웃</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="div"></div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">생체인증 사용</div>
+          <div class="toggle-sub">Face ID / 지문으로 빠른 로그인</div>
+        </div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="div"></div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">알림 수신</div>
+          <div class="toggle-sub">발주 승인, 입고 알림</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <div class="sec-head">앱 정보</div>
+    <div class="card">
+      <div class="row"><span class="row-label">버전</span><span class="row-value">1.0.0-MVP</span></div>
+      <div class="row"><span class="row-label">서버</span><span class="row-value">잠실점 (KYO-JSL)</span></div>
+      <div class="row"><span class="row-label">마지막 동기화</span><span class="row-value">방금 전</span></div>
+    </div>
+
+    <div style="height:8px"></div>
+    <button class="btn btn-crit" onclick="doLogout()">로그아웃</button>
+    <div style="height:16px"></div>
+  `;
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('global-tab').style.display = 'none';
+  document.getElementById('scan-fab').style.display = 'none';
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
+  document.getElementById('quick-admin').style.display = 'none';
+  showScreen('screen-login');
+}
+
+// ══════════════════════════════════════════
+// SCAN
+// ══════════════════════════════════════════
+async function openScan() {
+  document.getElementById('scan-overlay').classList.add('show');
+  document.getElementById('scan-manual-input').value = '';
+  scanActive = true;
+
+  const video = document.getElementById('scan-video');
+  video.style.display = 'block';
+
+  function showScanError(msg) {
+    const el = document.getElementById('scan-error-msg');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+
+  try {
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+    } catch(e1) {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      } catch(e2) {
+        showScanError('카메라 오류: ' + e2.name + ' — ' + e2.message);
+        return;
+      }
+    }
+    scanStream = stream;
+
+    try {
+      video.srcObject = stream;
+      await video.play();
+    } catch(ep) {
+      showScanError('video.play() 실패: ' + ep.name + ' — ' + ep.message);
+      return;
+    }
+
+    // ZXing — 캔버스 픽셀 직접 처리 (데이터URL 변환 없음)
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js';
+    s.onload = () => {
+      const hints = new Map([
+        [ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+          ZXing.BarcodeFormat.EAN_13,
+          ZXing.BarcodeFormat.EAN_8,
+          ZXing.BarcodeFormat.CODE_128,
+        ]],
+        [ZXing.DecodeHintType.TRY_HARDER, true],
+        [ZXing.DecodeHintType.CHARACTER_SET, 'UTF-8'],
+      ]);
+      const reader = new ZXing.MultiFormatReader();
+      reader.setHints(hints);
+
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      function zxingLoop() {
+        if (!scanActive) return;
+        if (!video.videoWidth) { setTimeout(zxingLoop, 150); return; }
+        canvas.width  = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        try {
+          const src = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+          const bmp = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(src));
+          const result = reader.decode(bmp);
+          const isbn = result.getText().replace(/\D/g, '');
+          if (isbn.length >= 10 && scanActive) { closeScan(); handleScannedISBN(isbn); return; }
+        } catch(e) { /* 미인식 프레임 — 계속 */ }
+        if (scanActive) setTimeout(zxingLoop, 150);
+      }
+      zxingLoop();
+    };
+    s.onerror = () => toast('스캐너 로드 실패 — 직접 입력해주세요');
+    document.head.appendChild(s);
+  } catch(e) {
+    toast('카메라를 시작할 수 없어요 — 직접 입력해주세요');
+  }
+}
+
+function closeScan() {
+  scanActive = false;
+  document.getElementById('scan-overlay').classList.remove('show');
+  const errEl = document.getElementById('scan-error-msg');
+  if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+}
+
+function scanManualSubmit() {
+  const val = document.getElementById('scan-manual-input').value.replace(/\D/g,'');
+  if(val.length < 10) { toast('올바른 ISBN을 입력해주세요'); return; }
+  closeScan();
+  handleScannedISBN(val);
+}
+
+async function handleScannedISBN(isbn) {
+  const clean = isbn.trim().replace(/[-\s]/g, '');
+  console.log('[스캔] 원본:', JSON.stringify(isbn), '→ 정제:', JSON.stringify(clean));
+  isbn = clean;
+  toast('ISBN 조회 중…');
+  const book = await BookService.getByISBN(isbn);
+  if (book) {
+    toast('✓ ' + book.title);
+    openBook(isbn);
+  } else {
+    toast('등록되지 않은 ISBN입니다');
+    performSearch(isbn);
+  }
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+let toastTimer = null;
+function toast(msg, duration) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), duration || 2400);
+}
+
+// ══════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════
+// 서가 위치 배열 → 한 줄 요약 (검색결과·발주화면용)
+function shelfSummary(shelves) {
+  if (!shelves || !shelves.length) return '-';
+  return shelves.map(s => s.number + (s.subCategory ? ` (${s.subCategory})` : '')).join(' · ');
+}
+
+// 서가 위치 배열 → 상세 HTML (도서상세·관리자용)
+function shelfListHtml(shelves, editable, isbn) {
+  if (!shelves || !shelves.length) return '<div style="color:var(--text3);font-size:13px">등록된 위치 없음</div>';
+  return shelves.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;${i > 0 ? 'border-top:1px solid var(--border)' : ''}">
+      <div style="font-size:22px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;min-width:72px">${escHtml(s.number)}</div>
+      <div style="flex:1">
+        <span class="chip chip-mute" style="font-size:11px">${escHtml(s.displayType)}</span>
+        ${s.subCategory ? `<span class="chip chip-acc" style="font-size:11px;margin-left:4px">소분류 ${escHtml(s.subCategory)}</span>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function escHtml(s) {
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function stockColor(n) {
+  if(n === 0) return { color:'var(--crit)' };
+  if(n <= 2)  return { color:'var(--warn)' };
+  return { color:'var(--good)' };
+}
+
+function orderChip(status) {
+  const map = { '검토중':'chip-warn', '승인완료':'chip-good', '발주완료':'chip-info', '반려':'chip-crit' };
+  return map[status] || 'chip-mute';
+}
+
+function incomingChip(status) {
+  const map = { '도착완료':'chip-good', '배송중':'chip-info', '출발전':'chip-warn', '주문접수':'chip-mute', '미정':'chip-mute', '없음':'chip-mute' };
+  return map[status] || 'chip-mute';
+}
+
+// ══════════════════════════════════════════
+// 업무 알림 DATA
+// ══════════════════════════════════════════
+const EVENTS = [
+  {
+    id: 'EVT-001',
+    title: '여름 문학 기획전',
+    status: 'ongoing',
+    date: '2026-06-20 ~ 2026-07-20',
+    corner: 'F코너 · 국내소설',
+    checklist: [
+      { id:'c1', text:'기획전 POP 부착 (소설 A서가 상단)', done: true },
+      { id:'c2', text:'추천 도서 30종 전면 진열', done: true },
+      { id:'c3', text:'할인 스티커 부착 완료', done: false },
+      { id:'c4', text:'기획전 도서 재고 최소 5부 이상 유지', done: false },
+    ],
+    books: [
+      { isbn:'9788937460067', note:'전면 진열 · 재고 5부 이상 유지' },
+      { isbn:'9791160505009', note:'전면 진열' },
+      { isbn:'9788937473746', note:'전면 진열' },
+      { isbn:'9791135495748', note:'사이드 진열' },
+      { isbn:'9791164370900', note:'전면 진열 · 할인 스티커 부착' },
+    ]
+  },
+  {
+    id: 'EVT-002',
+    title: '한강 작가 노벨상 특별 코너',
+    status: 'ongoing',
+    date: '2026-06-01 ~ 2026-07-31',
+    corner: 'F코너 · 국내소설',
+    checklist: [
+      { id:'c5', text:'특별 코너 배너 설치', done: true },
+      { id:'c6', text:'전 작품 진열 (11종)', done: true },
+      { id:'c7', text:'매주 월요일 재고 보충 확인', done: false },
+    ],
+    books: [
+      { isbn:'9791160505009', note:'대표작 · 전면 진열' },
+      { isbn:'9788937473746', note:'전면 진열' },
+      { isbn:'9788937460067', note:'작가 추천' },
+    ]
+  },
+  {
+    id: 'EVT-003',
+    title: '청소년 추천 도서 100선',
+    status: 'upcoming',
+    date: '2026-07-05 ~ 2026-08-15',
+    corner: 'F코너 · 청소년',
+    checklist: [
+      { id:'c8', text:'선정 도서 리스트 확인 및 재고 파악', done: false },
+      { id:'c9', text:'진열대 공간 확보 (청소년 B구역)', done: false },
+      { id:'c10', text:'추천 도서 POP 출력', done: false },
+    ],
+    books: [
+      { isbn:'9791135495748', note:'필독 추천' },
+      { isbn:'9788937460067', note:'청소년 권장' },
+    ]
+  },
+];
+
+const HANDOVER_NOTES = [
+  {
+    id:'h1', author:'박지호', shift:'am', time:'14:02',
+    text:'A-15 서가 채식주의자 재고 2부 남음. 오늘 중 보충 필요. 창고 2번 선반에 예비 재고 있음.',
+    mine: false, scope:'corner', scopeLabel:'F코너'
+  },
+  {
+    id:'h2', author:'김민준', shift:'pm', time:'18:45',
+    text:'여름 기획전 할인 스티커 재고 부족. 사무실에 추가 요청 완료. 내일 오전 도착 예정.\n3층 에세이 코너 손님 문의 많음 — 트렌드 코리아 재고 확인 요망.',
+    mine: true, scope:'all', scopeLabel:'전체 공지'
+  },
+  {
+    id:'h3', author:'이수진', shift:'close', time:'21:30',
+    text:'마감 정리 완료. 소설 A구역 서가 정리 중 파손 도서 1부 발견 (아몬드 / ISBN 9791135495748) — 처리 대기함 보관.',
+    mine: false, scope:'part', scopeLabel:'국내도서 파트'
+  },
+];
+
+// ══════════════════════════════════════════
+// 매장 현황 DATA
+// ══════════════════════════════════════════
+const STORE_STATS = {
+  corner: 'F코너',
+  genre: '문학',
+  todaySales: 84,
+  salesChange: +12,
+  newArrivals: 7,
+  lowStock: 5,
+};
+
+const GENRES = ['전체', '소설', '에세이', '만화', '청소년'];
+
+const NEW_ARRIVALS_STORE = [
+  { isbn:'9791162543', title:'작별하지 않는다', author:'한강', publisher:'문학동네', arrivedQty:20, stock:18 },
+  { isbn:'9788954695', title:'파친코 2', author:'이민진', publisher:'문학사상', arrivedQty:15, stock:15 },
+  { isbn:'9791191114', title:'달러구트 꿈 백화점 3', author:'이미예', publisher:'팩토리나인', arrivedQty:30, stock:27 },
+  { isbn:'9788932919', title:'피프티 피플', author:'정세랑', publisher:'창비', arrivedQty:10, stock:10 },
+  { isbn:'9791190090', title:'구의 증명', author:'최진영', publisher:'은행나무', arrivedQty:12, stock:11 },
+];
+
+const BEST100 = [
+  { rank:1,  title:'82년생 김지영',      author:'조남주',   genre:'소설',   sold:23, stock:3  },
+  { rank:2,  title:'채식주의자',          author:'한강',     genre:'소설',   sold:19, stock:2  },
+  { rank:3,  title:'트렌드 코리아 2026', author:'김난도 외', genre:'에세이', sold:17, stock:7  },
+  { rank:4,  title:'소년이 온다',         author:'한강',     genre:'소설',   sold:15, stock:6  },
+  { rank:5,  title:'불편한 편의점',       author:'김호연',   genre:'소설',   sold:14, stock:0  },
+  { rank:6,  title:'아몬드',             author:'손원평',   genre:'소설',   sold:12, stock:4  },
+  { rank:7,  title:'나는 나로 살기로 했다', author:'김수현', genre:'에세이', sold:11, stock:9  },
+  { rank:8,  title:'달러구트 꿈 백화점', author:'이미예',   genre:'소설',   sold:10, stock:5  },
+  { rank:9,  title:'하마터면 열심히 살 뻔했다', author:'하완', genre:'에세이', sold:9, stock:3 },
+  { rank:10, title:'완전한 행복',         author:'정유정',   genre:'소설',   sold:9,  stock:1  },
+  { rank:11, title:'지구에서 한아뿐',     author:'이현',     genre:'청소년', sold:8,  stock:6  },
+  { rank:12, title:'슬램덩크 1',         author:'이노우에', genre:'만화',   sold:8,  stock:12 },
+  { rank:13, title:'피프티 피플',         author:'정세랑',   genre:'소설',   sold:7,  stock:10 },
+  { rank:14, title:'꽤 괜찮은 해피엔딩', author:'이지은',   genre:'소설',   sold:7,  stock:4  },
+  { rank:15, title:'구의 증명',           author:'최진영',   genre:'소설',   sold:6,  stock:11 },
+  { rank:16, title:'죽고 싶지만 떡볶이는 먹고 싶어', author:'백세희', genre:'에세이', sold:6, stock:2 },
+  { rank:17, title:'어린 왕자',           author:'생텍쥐페리', genre:'청소년', sold:6, stock:8 },
+  { rank:18, title:'원피스 1',           author:'오다 에이이치로', genre:'만화', sold:5, stock:15 },
+  { rank:19, title:'파친코',             author:'이민진',   genre:'소설',   sold:5,  stock:3  },
+  { rank:20, title:'우리가 빛의 속도로 갈 수 없다면', author:'김초엽', genre:'소설', sold:5, stock:7 },
+];
+for(let i=21;i<=100;i++){
+  BEST100.push({
+    rank:i,
+    title:`문학 도서 ${i}위`,
+    author:'저자명',
+    genre: ['소설','에세이','만화','청소년'][Math.floor(Math.random()*4)],
+    sold: Math.max(1, 6-Math.floor(i/20)),
+    stock: Math.floor(Math.random()*15),
+  });
+}
+
+// ══════════════════════════════════════════
+// 업무 알림 렌더
+// ══════════════════════════════════════════
+let currentNoticeTab = 'events';
+
+function switchNoticeTab(tab, el) {
+  currentNoticeTab = tab;
+  document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderNotices();
+}
+
+function renderNotices() {
+  const el = document.getElementById('notices-content');
+  if (currentNoticeTab === 'events') {
+    el.innerHTML = EVENTS.map(ev => `
+      <div class="event-card" onclick="openEventDetail('${ev.id}')" style="cursor:pointer">
+        <div class="event-head">
+          <span class="event-badge ${ev.status==='ongoing'?'event-ongoing':'event-upcoming'}">
+            ${ev.status==='ongoing'?'진행중':'예정'}
+          </span>
+          <div style="flex:1;min-width:0">
+            <div class="event-title">${escHtml(ev.title)}</div>
+            <div class="event-date">${escHtml(ev.date)} · ${escHtml(ev.corner)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+            <div style="font-size:12px;color:var(--text2)">${ev.checklist.filter(c=>c.done).length}/${ev.checklist.length}</div>
+            <div style="font-size:11px;color:var(--text3)">도서 ${(ev.books||[]).length}종</div>
+          </div>
+        </div>
+        <div style="padding:4px 14px 8px;background:var(--surf1)">
+          <div class="prog-bar">
+            <div class="prog-fill" style="width:${Math.round(ev.checklist.filter(c=>c.done).length/ev.checklist.length*100)}%"></div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    el.innerHTML = `
+      <div style="margin-bottom:12px">
+        <button class="btn btn-accent" onclick="openNewHandover()">✏️ 인수인계 작성</button>
+      </div>
+      ${HANDOVER_NOTES.map(n => `
+        <div class="handover-card ${n.mine?'mine':''}">
+          <div class="handover-meta">
+            <span class="handover-author">${escHtml(n.author)} ${n.mine?'<span style="color:var(--accent);font-size:10px">(나)</span>':''}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              ${n.mine ? `<button class="btn btn-ghost btn-sm" style="height:28px;font-size:11px;padding:0 10px" onclick="editHandover('${n.id}')">수정</button>` : ''}
+              <span class="handover-time">${escHtml(n.time)}</span>
+            </div>
+          </div>
+          <div class="handover-text">${escHtml(n.text).replace(/\n/g,'<br>')}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <span class="handover-shift ${n.shift==='am'?'shift-am':n.shift==='pm'?'shift-pm':'shift-close'}">
+              ${n.shift==='am'?'오전 근무':n.shift==='pm'?'오후 근무':'마감 근무'}
+            </span>
+            <span class="chip ${n.scope==='all'?'chip-info':n.scope==='part'?'chip-warn':'chip-mute'}" style="font-size:10px;padding:2px 7px">
+              ${n.scope==='all'?'📢':n.scope==='part'?'👥':'📌'} ${escHtml(n.scopeLabel||'전체 공지')}
+            </span>
+          </div>
+        </div>
+      `).join('')}
+    `;
+  }
+}
+
+let currentEventId = null;
+let currentEventTab = 'checklist';
+
+function openEventDetail(eventId) {
+  currentEventId = eventId;
+  currentEventTab = 'checklist';
+  const ev = EVENTS.find(e => e.id === eventId);
+  if (!ev) return;
+  document.getElementById('event-detail-title').textContent =
+    ev.title.length > 13 ? ev.title.slice(0,13)+'…' : ev.title;
+  document.getElementById('event-detail-badge').textContent =
+    ev.status === 'ongoing' ? '진행중' : '예정';
+  document.getElementById('event-detail-badge').className =
+    'header-badge' + (ev.status === 'ongoing' ? '' : ' chip-info');
+  document.getElementById('event-book-count').textContent = `${(ev.books||[]).length}종`;
+  document.querySelectorAll('#screen-event-detail .inner-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  renderEventDetail();
+  showScreen('screen-event-detail');
+}
+
+function switchEventTab(tab, el) {
+  currentEventTab = tab;
+  document.querySelectorAll('#screen-event-detail .inner-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderEventDetail();
+}
+
+function renderEventDetail() {
+  const ev = EVENTS.find(e => e.id === currentEventId);
+  if (!ev) return;
+  const el = document.getElementById('event-detail-content');
+
+  if (currentEventTab === 'checklist') {
+    const done = ev.checklist.filter(c=>c.done).length;
+    el.innerHTML = `
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <span style="font-size:13px;color:var(--text2)">진행률</span>
+          <span style="font-size:13px;font-weight:700;color:var(--accent)">${done}/${ev.checklist.length} 완료</span>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${Math.round(done/ev.checklist.length*100)}%"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">${escHtml(ev.date)} · ${escHtml(ev.corner)}</div>
+      </div>
+      <div class="card" style="padding:4px 14px">
+        ${ev.checklist.map(c => `
+          <div class="check-item ${c.done?'done':''}" style="padding:10px 0;border-bottom:1px solid var(--border)"
+            onclick="toggleCheck('${ev.id}','${c.id}',this)">
+            <div class="check-box">${c.done?'✓':''}</div>
+            <span>${escHtml(c.text)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  } else {
+    const books = (ev.books || []).map(b => ({ ...b, info: BOOKS[b.isbn] }));
+    el.innerHTML = `
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px">총 ${books.length}종 · 탭하면 도서 상세로 이동</div>
+      ${books.map((b, i) => {
+        const info = b.info;
+        if (!info) return `
+          <div class="result-item" style="opacity:.5">
+            <div class="book-thumb">📖</div>
+            <div style="flex:1"><div class="card-title">${escHtml(b.isbn)}</div>
+            <div class="card-sub">도서 정보 없음</div></div>
+          </div>`;
+        const total = info.stock.available + info.stock.stored;
+        const sc = stockColor(total);
+        return `
+          <div class="result-item" onclick="openBook('${b.isbn}')">
+            <div style="width:28px;font-size:13px;font-weight:700;color:${i<3?'var(--accent)':'var(--text3)'};text-align:center;flex-shrink:0">${i+1}</div>
+            <div style="flex:1;min-width:0">
+              <div class="card-title">${escHtml(info.title)}</div>
+              <div class="card-sub">${escHtml(info.author)} · ${escHtml(info.publisher)}</div>
+              ${b.note ? `<div style="margin-top:4px"><span class="chip chip-mute" style="font-size:10px">${escHtml(b.note)}</span></div>` : ''}
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div class="result-stock" style="color:${sc.color}">${total}</div>
+              <div class="result-stock-label">재고</div>
+            </div>
+          </div>`;
+      }).join('')}
+    `;
+  }
+}
+
+function toggleCheck(eventId, checkId, rowEl) {
+  const ev = EVENTS.find(e => e.id === eventId);
+  const item = ev?.checklist.find(c => c.id === checkId);
+  if (!item) return;
+  item.done = !item.done;
+  // 현재 어느 화면에서 체크했는지에 따라 리렌더 분기
+  if (document.getElementById('screen-event-detail').classList.contains('active')) {
+    renderEventDetail();
+  } else {
+    renderNotices();
+  }
+}
+
+function openNewHandover() {
+  const html = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end">
+      <div style="background:var(--surf1);border-radius:16px 16px 0 0;width:100%;padding:20px 16px 32px;border:1px solid var(--border)">
+        <div style="font-size:16px;font-weight:700;color:var(--text1);margin-bottom:14px">인수인계 작성</div>
+        <div class="field" style="margin-bottom:10px">
+          <label>근무 시간대</label>
+          <select id="ho-shift">
+            <option value="am">오전 근무</option>
+            <option value="pm" selected>오후 근무</option>
+            <option value="close">마감 근무</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>공개 범위</label>
+          <select id="ho-scope" onchange="updateScopeDetail(this.value)">
+            <option value="all">📢 전체 공지 (잠실점 전체)</option>
+            <option value="part">👥 파트별 공지</option>
+            <option value="corner">📌 코너별 공지</option>
+          </select>
+        </div>
+        <div id="ho-scope-detail" style="display:none;margin-bottom:10px">
+          <select id="ho-scope-value" style="width:100%;padding:10px 12px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--surf2);color:var(--text1);font-size:14px"></select>
+        </div>
+        <div class="field">
+          <label>내용</label>
+          <textarea id="ho-text" placeholder="다음 근무자에게 전달할 내용을 입력하세요…" style="height:110px"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-accent" onclick="submitHandover()">등록</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('ho-modal').remove()">취소</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const modal = document.createElement('div');
+  modal.id = 'ho-modal';
+  modal.innerHTML = html;
+  document.getElementById('app').appendChild(modal);
+}
+
+function editHandover(id) {
+  const note = HANDOVER_NOTES.find(n => n.id === id);
+  if (!note) return;
+  const shiftOptions = ['am','pm','close'].map(v =>
+    `<option value="${v}" ${note.shift===v?'selected':''}>${v==='am'?'오전 근무':v==='pm'?'오후 근무':'마감 근무'}</option>`
+  ).join('');
+  const modal = document.createElement('div');
+  modal.id = 'ho-modal';
+  modal.innerHTML = `
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;display:flex;align-items:flex-end">
+      <div style="background:var(--surf1);border-radius:16px 16px 0 0;width:100%;padding:20px 16px 32px;border:1px solid var(--border)">
+        <div style="font-size:16px;font-weight:700;color:var(--text1);margin-bottom:14px">인수인계 수정</div>
+        <div class="field" style="margin-bottom:10px">
+          <label>근무 시간대</label>
+          <select id="ho-shift">${shiftOptions}</select>
+        </div>
+        <div class="field" style="margin-bottom:10px">
+          <label>공개 범위</label>
+          <select id="ho-scope" onchange="updateScopeDetail(this.value)">
+            <option value="all" ${note.scope==='all'?'selected':''}>📢 전체 공지 (잠실점 전체)</option>
+            <option value="part" ${note.scope==='part'?'selected':''}>👥 파트별 공지</option>
+            <option value="corner" ${note.scope==='corner'?'selected':''}>📌 코너별 공지</option>
+          </select>
+        </div>
+        <div id="ho-scope-detail" style="${note.scope==='all'?'display:none':''}margin-bottom:10px">
+          <select id="ho-scope-value" style="width:100%;padding:10px 12px;border-radius:var(--radius-s);border:1px solid var(--border);background:var(--surf2);color:var(--text1);font-size:14px">
+            ${(note.scope==='part'?SCOPE_PARTS:SCOPE_CORNERS).map(o=>`<option value="${o}" ${note.scopeLabel===o?'selected':''}>${o}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>내용</label>
+          <textarea id="ho-text" style="height:110px">${escHtml(note.text)}</textarea>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-accent" onclick="submitHandover('${id}')">저장</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('ho-modal').remove()">취소</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('app').appendChild(modal);
+}
+
+const SCOPE_PARTS   = ['국내도서 파트','외국도서 파트','아동 파트','참고서 파트'];
+const SCOPE_CORNERS = ['F코너','G코너','A코너','B코너','C코너','D코너','E코너'];
+
+function updateScopeDetail(val) {
+  const wrap = document.getElementById('ho-scope-detail');
+  const sel  = document.getElementById('ho-scope-value');
+  if (val === 'all') { wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+  const opts = val === 'part' ? SCOPE_PARTS : SCOPE_CORNERS;
+  sel.innerHTML = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+}
+
+function submitHandover(editId) {
+  const text  = document.getElementById('ho-text').value.trim();
+  const shift = document.getElementById('ho-shift').value;
+  if (!text) { toast('내용을 입력해주세요'); return; }
+  const scopeEl = document.getElementById('ho-scope');
+  const scope   = scopeEl ? scopeEl.value : 'all';
+  const scopeValEl = document.getElementById('ho-scope-value');
+  const scopeLabel = scope === 'all' ? '전체 공지'
+    : (scopeValEl ? scopeValEl.value : '');
+  const now  = new Date();
+  const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  if (editId) {
+    const note = HANDOVER_NOTES.find(n => n.id === editId);
+    if (note) { note.text = text; note.shift = shift; note.time = time;
+                note.scope = scope; note.scopeLabel = scopeLabel; }
+    toast('수정되었습니다 ✓');
+  } else {
+    HANDOVER_NOTES.unshift({
+      id: 'h' + Date.now(), author: currentUser?.name || '직원',
+      shift, time, text, mine: true, scope, scopeLabel,
+    });
+    toast('인수인계가 등록되었습니다 ✓');
+  }
+  document.getElementById('ho-modal')?.remove();
+  renderNotices();
+}
+
+// ══════════════════════════════════════════
+// 매장 현황 렌더
+// ══════════════════════════════════════════
+let currentGenre = '전체';
+
+function renderStoreStatus() {
+  const el = document.getElementById('store-content');
+  el.innerHTML = `
+    <!-- 판매 통계 -->
+    <div class="sec-head">오늘 판매 현황</div>
+    <div class="stat-row">
+      <div class="stat-cell">
+        <div class="stat-num">${STORE_STATS.todaySales}</div>
+        <div class="stat-label">오늘 판매 (권)</div>
+        <div class="stat-change ${STORE_STATS.salesChange>=0?'stat-up':'stat-down'}">
+          ${STORE_STATS.salesChange>=0?'▲':'▼'} ${Math.abs(STORE_STATS.salesChange)}권 어제 대비
+        </div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num" style="color:var(--warn)">${STORE_STATS.lowStock}</div>
+        <div class="stat-label">재고 소진 임박</div>
+        <div class="stat-change" style="color:var(--text2)">잔여 2부 이하</div>
+      </div>
+    </div>
+
+    <!-- 신간 입고 현황 -->
+    <div class="sec-head">신간 입고 현황</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      ${NEW_ARRIVALS_STORE.map((b,i) => `
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;${i>0?'border-top:1px solid var(--border)':''}">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--good);flex-shrink:0"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:500;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(b.title)}</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:1px">${escHtml(b.author)} · 입고 ${b.arrivedQty}부</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:${stockColor(b.stock).color}">${b.stock}</div>
+            <div style="font-size:10px;color:var(--text2)">현 재고</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- 베스트 100 -->
+    <div class="sec-head">당일 베스트 100</div>
+    <div id="best100-wrap"></div>
+  `;
+
+  renderGenreFilter();
+  renderBest100();
+}
+
+function renderGenreFilter() {
+  const wrap = document.getElementById('best100-wrap');
+  if (!wrap) return;
+  const filterHtml = `
+    <div class="genre-filter" id="genre-filter-bar">
+      ${GENRES.map(g => `
+        <button class="genre-chip ${g===currentGenre?'active':''}" onclick="setGenre('${g}')">${g}</button>
+      `).join('')}
+    </div>
+    <div id="best100-list"></div>
+  `;
+  wrap.innerHTML = filterHtml;
+  renderBest100List();
+}
+
+function setGenre(genre) {
+  currentGenre = genre;
+  document.querySelectorAll('.genre-chip').forEach(c => {
+    c.classList.toggle('active', c.textContent === genre);
+  });
+  renderBest100List();
+}
+
+function renderBest100List() {
+  const filtered = currentGenre === '전체'
+    ? BEST100
+    : BEST100.filter(b => b.genre === currentGenre);
+  const reranked = filtered.map((b, i) => ({ ...b, dispRank: i + 1 }));
+
+  const el = document.getElementById('best100-list');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="card" style="padding:4px 14px">
+      ${reranked.map(b => `
+        <div class="rank-row" onclick="openBook(Object.values(BOOKS).find(x=>x.title.includes('${escHtml(b.title.slice(0,6))}'))?.isbn||'')">
+          <div class="rank-num ${b.dispRank<=3?'top3':''}">${b.dispRank}</div>
+          <div class="rank-info">
+            <div class="rank-title">${escHtml(b.title)}</div>
+            <div class="rank-author">${escHtml(b.author)} · <span style="color:var(--accent);font-size:10px">${escHtml(b.genre)}</span></div>
+          </div>
+          <div class="rank-stats">
+            <div class="rank-sold">${b.sold}권</div>
+            <div class="rank-stock-label ${b.stock<=2?'':''}">
+              <span style="color:${stockColor(b.stock).color};font-weight:600">${b.stock}부</span> 남음
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+// Pre-render admin content
+setTimeout(() => {
+  renderAdmin();
+  renderOrders();
+  renderIncoming();
+}, 100);
+
+// Screen init for screens that need content
+document.querySelector('[onclick="showScreen(\'screen-admin\')"]')?.addEventListener('click', renderAdmin);
+
+// PWA 서비스워커 등록
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+</script>

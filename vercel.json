@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/naver/book", "destination": "/api/naver" }
+  ]
+}
