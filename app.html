@@ -1910,6 +1910,9 @@ function saveShelf(isbn) {
     subCategory: subs[i].value.trim() || null,
   })).filter(s => s.number);
   saveLocal();
+  // 검색 결과 카드의 서가 배지도 즉시 갱신
+  const chip = document.querySelector(`.result-item[onclick="openBook('${isbn}')"] .chip`);
+  if (chip) chip.textContent = shelfSummary(b.shelves);
   toast('서가 위치가 저장되었습니다 ✓');
   const savedPrev = prevScreen;
   setTimeout(() => { openBook(isbn); prevScreen = savedPrev; showScreen('screen-book'); }, 400);
@@ -2541,7 +2544,10 @@ function renderNotices() {
           <div class="handover-meta">
             <span class="handover-author">${escHtml(n.author)} ${n.mine?'<span style="color:var(--accent);font-size:10px">(나)</span>':''}</span>
             <div style="display:flex;align-items:center;gap:8px">
-              ${n.mine ? `<button class="btn btn-ghost btn-sm" style="height:28px;font-size:11px;padding:0 10px" onclick="editHandover('${n.id}')">수정</button>` : ''}
+              ${n.mine ? `
+                <button class="btn btn-ghost btn-sm" style="height:28px;font-size:11px;padding:0 10px;color:var(--crit)" onclick="deleteHandover('${n.id}')">삭제</button>
+                <button class="btn btn-ghost btn-sm" style="height:28px;font-size:11px;padding:0 10px" onclick="editHandover('${n.id}')">수정</button>
+              ` : ''}
               <span class="handover-time">${escHtml(n.time)}</span>
             </div>
           </div>
@@ -2697,6 +2703,12 @@ function openNewHandover() {
   modal.id = 'ho-modal';
   modal.innerHTML = html;
   document.getElementById('app').appendChild(modal);
+}
+
+function deleteHandover(id) {
+  if (!confirm('이 인수인계 메모를 삭제할까요?')) return;
+  const idx = HANDOVER_NOTES.findIndex(n => n.id === id);
+  if (idx !== -1) { HANDOVER_NOTES.splice(idx, 1); saveLocal(); renderNotices(); toast('삭제되었습니다'); }
 }
 
 function editHandover(id) {
