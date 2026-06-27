@@ -1500,8 +1500,30 @@ let barcodeDetector = null;
 let scanActive = false;
 
 // ══════════════════════════════════════════
+// LOCALSTORAGE 저장/불러오기
+// ══════════════════════════════════════════
+function saveLocal() {
+  try {
+    const shelfData = {};
+    Object.keys(BOOKS).forEach(isbn => { if (BOOKS[isbn]?.shelves) shelfData[isbn] = BOOKS[isbn].shelves; });
+    localStorage.setItem('storeops_shelves', JSON.stringify(shelfData));
+    localStorage.setItem('storeops_handover', JSON.stringify(HANDOVER_NOTES));
+  } catch(e) {}
+}
+
+function loadLocal() {
+  try {
+    const shelves = JSON.parse(localStorage.getItem('storeops_shelves') || '{}');
+    Object.keys(shelves).forEach(isbn => { if (BOOKS[isbn]) BOOKS[isbn].shelves = shelves[isbn]; });
+    const notes = JSON.parse(localStorage.getItem('storeops_handover') || 'null');
+    if (notes) { HANDOVER_NOTES.length = 0; notes.forEach(n => HANDOVER_NOTES.push(n)); }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
+loadLocal();
 document.getElementById('today-date').textContent =
   new Date().toLocaleDateString('ko-KR',{month:'short',day:'numeric',weekday:'short'});
 
@@ -1853,6 +1875,7 @@ function saveShelf(isbn) {
     displayType: types[i].value,
     subCategory: subs[i].value.trim() || null,
   })).filter(s => s.number);
+  saveLocal();
   toast('서가 위치가 저장되었습니다 ✓');
   const savedPrev = prevScreen;
   setTimeout(() => { openBook(isbn); prevScreen = savedPrev; showScreen('screen-book'); }, 400);
@@ -2717,6 +2740,7 @@ function submitHandover(editId) {
     });
     toast('인수인계가 등록되었습니다 ✓');
   }
+  saveLocal();
   document.getElementById('ho-modal')?.remove();
   renderNotices();
 }
