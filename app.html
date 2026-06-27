@@ -1415,12 +1415,17 @@ const BookService = {
 // 나중에 교보 재고 API가 생기면 이 함수만 교체하면 됩니다.
 function getInventory(isbn) {
   const b = BOOKS[isbn];
-  if (b?.stock) return { stock: b.stock, shelf: b.shelf, incoming: b.incoming, orders: b.orders };
+  if (b?.stock) return { stock: b.stock, shelves: b.shelves, incoming: b.incoming, orders: b.orders };
+  // localStorage에 저장된 서가 데이터 우선 적용
+  const savedShelves = (() => {
+    try { const d = JSON.parse(localStorage.getItem('so_shelves') || '{}'); return d[isbn] || null; }
+    catch(e) { return null; }
+  })();
   const a = Math.floor(Math.random() * 8) + 1;
   const s = Math.floor(Math.random() * 5);
   return {
     stock:    { available: a, stored: s, total: a + s },
-    shelves:  [{ number:'NEW-01', displayType:'신간대', subCategory:null }],
+    shelves:  savedShelves || [{ number:'NEW-01', displayType:'신간대', subCategory:null }],
     incoming: { qty: 0, date: null, status: '없음', reserved: 0 },
     orders:   [],
   };
